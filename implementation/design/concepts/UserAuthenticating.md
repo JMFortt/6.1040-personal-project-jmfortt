@@ -52,4 +52,7 @@ login(username: String, password: String) : returns (user: User)
 ```queries
 _username(user: User) : optional (username: String)
   Returns the username of the given user, or no row if the user does not exist.
+
+_user(username: String) : optional (user: User)
+  Returns the user with the given username, or no row if no user has it.
 ```
