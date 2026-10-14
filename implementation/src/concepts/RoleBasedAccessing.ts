@@ -42,7 +42,8 @@ export class RoleBasedAccessingConcept {
     }
 
     // unique indexes stop a user from being in, or invited to, the same group twice
-    private async ensureIndexes() {
+    // (# keeps helpers private at runtime, so the engine only sees actions and queries)
+    async #ensureIndexes() {
         if (this.indexed) return;
         await this.memberships.createIndex({ user: 1, group: 1 }, { unique: true });
         await this.invites.createIndex({ group: 1, invitee: 1 }, { unique: true });
@@ -50,7 +51,7 @@ export class RoleBasedAccessingConcept {
     }
 
     async createGroup({ owner, name, ownerRole }: { owner: string; name: string; ownerRole: string }) {
-        await this.ensureIndexes();
+        await this.#ensureIndexes();
         const group = crypto.randomUUID();
         await this.groups.insertOne({ _id: group, name, owner });
         await this.memberships.insertOne({ _id: crypto.randomUUID(), user: owner, group, role: ownerRole });
@@ -58,7 +59,7 @@ export class RoleBasedAccessingConcept {
     }
 
     async invite({ group, user, role }: { group: string; user: string; role: string }) {
-        await this.ensureIndexes();
+        await this.#ensureIndexes();
         if ((await this.groups.findOne({ _id: group })) === null) {
             throw new GroupNotFound("There is no such group.");
         }
@@ -79,7 +80,7 @@ export class RoleBasedAccessingConcept {
     }
 
     async accept({ invite, user }: { invite: string; user: string }) {
-        await this.ensureIndexes();
+        await this.#ensureIndexes();
         const found = await this.invites.findOne({ _id: invite });
         if (found === null) {
             throw new InviteNotFound("There is no such invite.");
@@ -93,21 +94,21 @@ export class RoleBasedAccessingConcept {
     }
 
     async changeRole({ group, user, role }: { group: string; user: string; role: string }) {
-        await this.checkRemovableMember(group, user, () =>
+        await this.#checkRemovableMember(group, user, () =>
             new CannotChangeOwnerRole("The owner's role cannot be changed."));
         await this.memberships.updateOne({ user, group }, { $set: { role } });
         return {};
     }
 
     async removeMember({ group, user }: { group: string; user: string }) {
-        await this.checkRemovableMember(group, user, () =>
+        await this.#checkRemovableMember(group, user, () =>
             new CannotRemoveOwner("The owner cannot be removed from the group."));
         await this.memberships.deleteOne({ user, group });
         return {};
     }
 
     // shared by changeRole and removeMember: user must be a member, and not the owner
-    private async checkRemovableMember(group: string, user: string, ownerError: () => Error) {
+    async #checkRemovableMember(group: string, user: string, ownerError: () => Error) {
         if ((await this.memberships.findOne({ user, group })) === null) {
             throw new NotAMember("That user is not a member of this group.");
         }

@@ -1,42 +1,8 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { createGateway } from "@mit-sdg/sync-engine/boundary";
-import { createHttpHandler } from "@mit-sdg/sync-engine-http/handler";
+import { afterAll, describe, expect, test } from "bun:test";
+import { testApi } from "./testApi.ts";
 
-// point the app at its own test database before loading it
-// since src/db.ts connects using MONGODB_URL as soon as it's imported
-const url = new URL(process.env.MONGODB_URL!);
-url.pathname = "/test_auth_composition";
-process.env.MONGODB_URL = url.toString();
-
-const { assembleApplication } = await import("../../src/assembly.ts");
-const { policy } = await import("../../src/http.ts");
-const { client, db } = await import("../../src/db.ts");
-
-// the same handler main.ts serves at /api/* called directly with no server running
-let api: ReturnType<typeof createHttpHandler>;
-
-beforeAll(async () => {
-    await db.dropDatabase();
-    const application = assembleApplication();
-    const gateway = createGateway({ application });
-    api = createHttpHandler({ application, gateway, policy });
-});
-
-afterAll(async () => {
-    await db.dropDatabase();
-    await client.close();
-});
-
-async function post(path: string, body: unknown) {
-    const response = await api(
-        new Request(`http://localhost/api${path}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        }),
-    );
-    return response.json();
-}
+const { post, close } = await testApi("test_auth_composition");
+afterAll(close);
 
 describe("Auth", () => {
     test("registering logs you in, and the session identifies you", async () => {

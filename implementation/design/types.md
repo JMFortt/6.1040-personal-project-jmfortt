@@ -1,11 +1,21 @@
 # Application types
 
 Every concept that refers to a person uses the users that UserAuthenticating
-registers, so a session belongs to a registered user.
+registers, so a session belongs to a registered user. Each class is a
+RoleBasedAccessing group, and its members hold one of TAble's staff roles.
+
+```types
+concrete StaffRole
+  One of LA, TA, or STAFF. A class's creator is STAFF.
+```
 
 ```instances
 instantiate UserAuthenticating
 
 instantiate Sessioning with
   User is UserAuthenticating.User
+
+instantiate RoleBasedAccessing with
+  User is UserAuthenticating.User
+  Role is StaffRole
 ```

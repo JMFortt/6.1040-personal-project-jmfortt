@@ -56,6 +56,29 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "INVALID_CREDENTIALS" | "INVALID_INPUT" | "USERNAME_TAKEN" };
   };
+  "/classes/create": {
+    input: {
+      "name": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["createGroup"]>[0], ["name"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "group": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["createGroup"]>>, ["group"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_LOGGED_IN" };
+  };
+  "/classes/mine": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "classes": {
+        "group": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_groupsForUser"]>>>, ["group"]>>;
+        "name": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_groupsForUser"]>>>, ["name"]>>;
+        "role": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_groupsForUser"]>>>, ["role"]>>;
+      }[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_LOGGED_IN" };
+  };
 };
 
 export type HttpAppWideError = never;
@@ -103,5 +126,28 @@ export type TAbleWireHttp = {
       "user": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["start"]>[0], ["user"]>>;
     };
     error: { error: HttpAppWideError | "CONFLICT" | "INVALID_REQUEST" };
+  };
+  "/classes/create": {
+    input: {
+      "name": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["createGroup"]>[0], ["name"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "group": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["createGroup"]>>, ["group"]>>;
+    };
+    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/classes/mine": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "classes": {
+        "group": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_groupsForUser"]>>>, ["group"]>>;
+        "name": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_groupsForUser"]>>>, ["name"]>>;
+        "role": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_groupsForUser"]>>>, ["role"]>>;
+      }[];
+    };
+    error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
   };
 };

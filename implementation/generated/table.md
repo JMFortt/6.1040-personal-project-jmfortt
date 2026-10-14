@@ -8,6 +8,40 @@ _specifications and composition source, then regenerate this file._
 
 ## Concepts
 
+### RoleBasedAccessing
+
+Defined in [RoleBasedAccessing](../design/concepts/RoleBasedAccessing.md), line 1.
+
+#### Actions
+
+- `createGroup(owner: User, name: String, ownerRole: Role) : returns (group: Group)`
+- `invite(group: Group, user: User, role: Role) : returns (invite: Invite)`
+  - Refuses `GROUP_NOT_FOUND`: There is no such group.
+  - Refuses `ALREADY_IN_GROUP`: That user is already a member of or invited to this group.
+- `accept(invite: Invite, user: User) : returns ()`
+  - Refuses `INVITE_NOT_FOUND`: There is no such invite.
+  - Refuses `NOT_INVITEE`: This invite is for a different user.
+- `changeRole(group: Group, user: User, role: Role) : returns ()`
+  - Refuses `NOT_A_MEMBER`: That user is not a member of this group.
+  - Refuses `CANNOT_CHANGE_OWNER_ROLE`: The owner's role cannot be changed.
+- `removeMember(group: Group, user: User) : returns ()`
+  - Refuses `NOT_A_MEMBER`: That user is not a member of this group.
+  - Refuses `CANNOT_REMOVE_OWNER`: The owner cannot be removed from the group.
+
+#### Queries
+
+- `_group(group: Group) : optional (name: String, owner: User)`
+- `_groupsForUser(user: User) : many (group: Group, name: String, role: Role)`
+- `_members(group: Group) : many (user: User, role: Role)`
+- `_invitesForUser(user: User) : many (invite: Invite, group: Group, role: Role)`
+- `_role(group: Group, user: User) : optional (role: Role)`
+
+#### Instances
+
+- `RoleBasedAccessing` — instance of `RoleBasedAccessing` — [Application types](../design/types.md), line 18.
+  - `Role` is `StaffRole` — [Application types](../design/types.md), line 20.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 19.
+
 ### Sessioning
 
 Defined in [Sessioning](../design/concepts/Sessioning.md), line 1.
@@ -22,8 +56,8 @@ Defined in [Sessioning](../design/concepts/Sessioning.md), line 1.
 
 #### Instances
 
-- `Sessioning` — instance of `Sessioning` — [Application types](../design/types.md), line 9.
-  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 10.
+- `Sessioning` — instance of `Sessioning` — [Application types](../design/types.md), line 15.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 16.
 
 ### UserAuthenticating
 
@@ -44,7 +78,13 @@ Defined in [UserAuthenticating](../design/concepts/UserAuthenticating.md), line 
 
 #### Instances
 
-- `UserAuthenticating` — instance of `UserAuthenticating` — [Application types](../design/types.md), line 7.
+- `UserAuthenticating` — instance of `UserAuthenticating` — [Application types](../design/types.md), line 13.
+
+## Application types
+
+Concrete types:
+
+- `StaffRole` — [Application types](../design/types.md), line 8.
 
 ## Formers
 
@@ -62,6 +102,20 @@ Former "the account of (user)" — inputs (user); bindings (username); promises 
     where UserAuthenticating._username (user) has (username)
     user
     username
+```
+
+### the classes of (user)
+
+Authored path: `Classes.MyClasses`.
+- Covered by [Classes](../design/compositions/Classes.md), line 11.
+
+```former
+Former "the classes of (user)" — inputs (user); bindings (group, name, role); promises exactly one record — forms:
+  each RoleBasedAccessing._groupsForUser (user) has (group, name, role)
+    form a record of
+      group
+      name
+      role
 ```
 
 ## Reactions
@@ -194,6 +248,72 @@ then
   RequestBoundary.respond (requestId, session, user)
 ```
 
+### Classes.Create
+
+Authored path: `Classes.Create`.
+- Covered by [Classes](../design/compositions/Classes.md), line 3.
+- Covered by [Classes](../design/compositions/Classes.md), line 7.
+
+```reaction
+when RequestBoundary.request (name, path: "/classes/create", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.Create#2
+
+Authored path: `Classes.Create`.
+- Covered by [Classes](../design/compositions/Classes.md), line 3.
+- Covered by [Classes](../design/compositions/Classes.md), line 7.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Create
+where
+  earlier, RequestBoundary.request (name, path: "/classes/create", requestId, session)
+then
+  RoleBasedAccessing.createGroup (name, owner: user, ownerRole: "STAFF")
+```
+
+### Classes.Create#3
+
+Authored path: `Classes.Create`.
+- Covered by [Classes](../design/compositions/Classes.md), line 3.
+- Covered by [Classes](../design/compositions/Classes.md), line 7.
+
+```reaction
+when RoleBasedAccessing.createGroup (name, owner: user, ownerRole: "STAFF", group), asked by Classes.Create#2
+where
+  earlier, RequestBoundary.request (name, path: "/classes/create", requestId, session)
+then
+  RequestBoundary.respond (group, requestId)
+```
+
+### Classes.Mine
+
+Authored path: `Classes.Mine`.
+- Covered by [Classes](../design/compositions/Classes.md), line 10.
+- Covered by [Classes](../design/compositions/Classes.md), line 14.
+
+```reaction
+when RequestBoundary.request (path: "/classes/mine", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.Mine#2
+
+Authored path: `Classes.Mine`.
+- Covered by [Classes](../design/compositions/Classes.md), line 10.
+- Covered by [Classes](../design/compositions/Classes.md), line 14.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Mine
+where
+  earlier, RequestBoundary.request (path: "/classes/mine", requestId, session)
+then
+  RequestBoundary.respond (classes: former "the classes of (user)" with (user), requestId)
+```
+
 ### DeliverFaultToAsker
 
 ```reaction
@@ -225,3 +345,5 @@ not listed here have no explicit input contract.
 - `/auth/login` — requires `username`, `password`
 - `/auth/logout` — requires `session`
 - `/auth/register` — requires `username`, `password`
+- `/classes/create` — requires `session`, `name`
+- `/classes/mine` — requires `session`
