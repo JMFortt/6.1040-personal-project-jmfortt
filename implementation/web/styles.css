@@ -23,6 +23,12 @@ label {
     gap: 0.5rem;
 }
 
+.top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .error {
     color: #c00;
     margin: 0;

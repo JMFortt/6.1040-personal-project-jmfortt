@@ -1,14 +1,16 @@
 import { defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, savedSession, saveSession } from "./api.ts";
-import { HelloPage } from "./HelloPage.ts";
+import { ClassesPage } from "./ClassesPage.ts";
 import { LoginPage } from "./LoginPage.ts";
 
-// shows the login page, or the hello page once you're logged in
+// shows the login page, or the classes page once you're logged in
 export const App = defineComponent({
-    components: { HelloPage, LoginPage },
+    components: { ClassesPage, LoginPage },
     setup() {
         const username = ref<string | null>(null);
         const checking = ref(true);
+        // shown on the login page, e.g. when a session has expired
+        const notice = ref("");
 
         // if a session was saved earlier, ask the backend whether it's still valid
         onMounted(async () => {
@@ -26,18 +28,20 @@ export const App = defineComponent({
         });
 
         function loggedIn(name: string) {
+            notice.value = "";
             username.value = name;
         }
 
-        function loggedOut() {
+        function loggedOut(message?: string) {
+            notice.value = message ?? "";
             username.value = null;
         }
 
-        return { username, checking, loggedIn, loggedOut };
+        return { username, checking, notice, loggedIn, loggedOut };
     },
     template: `
         <p v-if="checking">Loading…</p>
-        <HelloPage v-else-if="username !== null" :username="username" @logged-out="loggedOut" />
-        <LoginPage v-else @logged-in="loggedIn" />
+        <ClassesPage v-else-if="username !== null" :username="username" @logged-out="loggedOut" />
+        <LoginPage v-else :notice="notice" @logged-in="loggedIn" />
     `,
 });

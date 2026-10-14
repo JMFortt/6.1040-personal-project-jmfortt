@@ -4,11 +4,13 @@ import { client, errorMessage, saveSession, UNREACHABLE } from "./api.ts";
 const EMPTY = "Please enter a username and password.";
 
 export const LoginPage = defineComponent({
+    // notice: a message to show on arrival, like "You've been logged out"
+    props: { notice: { type: String, default: "" } },
     emits: ["logged-in"],
-    setup(_props, { emit }) {
+    setup(props, { emit }) {
         const username = ref("");
         const password = ref("");
-        const error = ref("");
+        const error = ref(props.notice);
         const busy = ref(false);
 
         async function submit(action: "login" | "register") {

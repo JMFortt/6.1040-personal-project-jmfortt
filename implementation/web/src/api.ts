@@ -5,6 +5,13 @@ import type { TAbleWireHttp } from "../../generated/wire.ts";
 export const client = createHttpClient<TAbleWireHttp>({ baseUrl: "/api" });
 
 export const UNREACHABLE = "Can't reach the server. Try again in a moment.";
+export const SESSION_EXPIRED = "You've been logged out. Please log in again.";
+
+// true if a protected request was refused because the session isn't valid,
+// which every page handles the same way: back to the login page
+export function loggedOutBy(result: object) {
+    return "error" in result && result.error === "UNAUTHORIZED";
+}
 
 // turns an error category from the API into a message for the user
 export function errorMessage(error: string, messages: Record<string, string>) {
