@@ -6,7 +6,7 @@ Simplify granting/revoking permissions for different groups
 
 ## Principle
 
-An admin creates a group and can invite users under a role (LA, TA, or staff). Once they accept, each gains that role's permissions. If the admin later changes a member's role, that member gains or loses permissions to match. A member who is removed loses them entirely
+An admin creates a group and can invite users under a role. Once they accept, each holds that role in the group, and so gains whatever permissions the role grants. If the admin later changes a member's role, that member gains or loses permissions to match. A member who is removed loses them entirely
 
 ## Types
 
@@ -14,11 +14,8 @@ An admin creates a group and can invite users under a role (LA, TA, or staff). O
 external User
   A person who can own, join, or be invited to a group.
 
-Role is LA or TA or STAFF
-  The fixed roles a member of a group can hold.
-
-Permission is VIEW_SCHEDULE or COVER_SHIFTS or EDIT_SCHEDULE or APPROVE_REQUESTS or MARK_ATTENDANCE or VIEW_ALL_ATTENDANCE or MANAGE_MEMBERS
-  The actions a role can allow.
+external Role
+  A role a member of a group can hold. What each role permits is up to the application.
 ```
 
 ## State
@@ -40,10 +37,10 @@ a set of Invites with
 ## Actions
 
 ```actions
-createGroup(owner: User, name: String) : returns (group: Group)
+createGroup(owner: User, name: String, ownerRole: Role) : returns (group: Group)
   where true
   then
-    create a new group with the given name and owner, and a STAFF membership for owner in it
+    create a new group with the given name and owner, and a membership for owner in it with ownerRole
     returns group
 
 invite(group: Group, user: User, role: Role) : returns (invite: Invite)
@@ -110,9 +107,6 @@ _members(group: Group) : many (user: User, role: Role)
 _invitesForUser(user: User) : many (invite: Invite, group: Group, role: Role)
   Returns every pending invite for user, ordered by invite, and no rows if there are none.
 
-_hasPermission(group: Group, user: User, permission: Permission) : one (allowed: Flag)
-  Answers whether user's role in group allows permission, and false if user is not a member or the group does not exist.
-  LA allows VIEW_SCHEDULE and COVER_SHIFTS.
-  TA allows everything LA does, plus EDIT_SCHEDULE, APPROVE_REQUESTS, MARK_ATTENDANCE, and VIEW_ALL_ATTENDANCE.
-  STAFF allows every permission.
+_role(group: Group, user: User) : optional (role: Role)
+  Returns user's role in group, or no row if user is not a member or the group does not exist.
 ```
