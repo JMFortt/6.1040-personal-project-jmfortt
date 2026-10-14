@@ -1,20 +1,9 @@
 # Application types
 
-Guests type their own name, and each reservation holds one table at one time.
-
-```types
-concrete Name
-  The name a guest types in when reserving.
-
-concrete Table
-  A table at a certain time, such as friday-7pm-table-4.
-```
+Every concept that refers to a person uses the users that UserAuthenticating
+registers, so a session belongs to a registered user.
 
 ```instances
-instantiate Reserving with
-  User is Name
-  Resource is Table
-
 instantiate UserAuthenticating
 
 instantiate Sessioning with

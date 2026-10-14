@@ -1,8 +1,8 @@
 import { createHttpClient } from "@mit-sdg/sync-engine-http/client";
-import type { ReservationsWireHttp } from "../../generated/wire.ts";
+import type { TAbleWireHttp } from "../../generated/wire.ts";
 
 // typed client generated from the backend's endpoints
-export const client = createHttpClient<ReservationsWireHttp>({ baseUrl: "/api" });
+export const client = createHttpClient<TAbleWireHttp>({ baseUrl: "/api" });
 
 export const UNREACHABLE = "Can't reach the server. Try again in a moment.";
 

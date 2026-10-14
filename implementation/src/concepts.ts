@@ -1,8 +1,6 @@
 import { conceptSet, registerConcept } from "@mit-sdg/sync-engine/assembly";
-import spec from "@design/concepts/Reserving.md" with { type: "text" };
 import sessioningSpec from "@design/concepts/Sessioning.md" with { type: "text" };
 import userAuthenticatingSpec from "@design/concepts/UserAuthenticating.md" with { type: "text" };
-import { AlreadyReserved, NoSuchReservation, ReservingConcept } from "./concepts/Reserving.ts";
 import { NotLoggedIn, SessioningConcept, SessionNotFound } from "./concepts/Sessioning.ts";
 import {
     InvalidCredentials,
@@ -10,12 +8,6 @@ import {
     UserAuthenticatingConcept,
     UsernameTaken,
 } from "./concepts/UserAuthenticating.ts";
-
-const reserving = registerConcept({
-    class: ReservingConcept,
-    spec,
-    refusals: { ALREADY_RESERVED: AlreadyReserved, NO_SUCH_RESERVATION: NoSuchReservation },
-});
 
 const userAuthenticating = registerConcept({
     class: UserAuthenticatingConcept,
@@ -34,7 +26,6 @@ const sessioning = registerConcept({
 });
 
 export const applicationConceptSet = conceptSet({
-    Reserving: reserving,
     UserAuthenticating: userAuthenticating,
     Sessioning: sessioning,
 });
