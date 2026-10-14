@@ -15,5 +15,8 @@ export const policy = httpPolicy({
         NOT_A_MEMBER: "NOT_FOUND",
         CANNOT_CHANGE_OWNER_ROLE: "FORBIDDEN",
         CANNOT_REMOVE_OWNER: "FORBIDDEN",
+        // app-level refusals from the Classes composition
+        NOT_ALLOWED: "FORBIDDEN",
+        NO_SUCH_USER: "NOT_FOUND",
     },
 });

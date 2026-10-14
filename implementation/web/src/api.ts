@@ -20,12 +20,13 @@ export function errorMessage(error: string, messages: Record<string, string>) {
     return "Something went wrong. Please try again.";
 }
 
-// the session is kept in localStorage so a refresh doesn't log you out
+// the session is kept in sessionStorage so a refresh doesn't log you out;
+// unlike localStorage it's per tab, so different tabs can be different users
 const SESSION_KEY = "table.session";
 
 export function savedSession() {
     try {
-        return localStorage.getItem(SESSION_KEY);
+        return sessionStorage.getItem(SESSION_KEY);
     } catch {
         return null;
     }
@@ -33,8 +34,8 @@ export function savedSession() {
 
 export function saveSession(session: string | null) {
     try {
-        if (session === null) localStorage.removeItem(SESSION_KEY);
-        else localStorage.setItem(SESSION_KEY, session);
+        if (session === null) sessionStorage.removeItem(SESSION_KEY);
+        else sessionStorage.setItem(SESSION_KEY, session);
     } catch {
         // storage blocked (e.g. private window): you just won't stay logged in on refresh
     }

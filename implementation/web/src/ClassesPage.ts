@@ -1,27 +1,29 @@
 import { defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, errorMessage, loggedOutBy, savedSession, saveSession, SESSION_EXPIRED, UNREACHABLE } from "./api.ts";
+import type { ClassRow } from "./ClassPage.ts";
 
-interface ClassRow {
+interface InviteRow {
+    invite: string;
     group: string;
     name: string;
     role: string;
 }
 
-// the home page once you're logged in: your classes, and a form to create one
+// the home page once you're logged in: your invites, your classes, and a form to create one
 export const ClassesPage = defineComponent({
-    props: { username: { type: String, required: true } },
-    emits: ["logged-out"],
+    emits: ["logged-out", "open-class"],
     setup(_props, { emit }) {
         const classes = ref<ClassRow[]>([]);
+        const invites = ref<InviteRow[]>([]);
         const loading = ref(true);
         const loadError = ref("");
+
+        const acceptError = ref("");
+        const accepting = ref(false);
 
         const newName = ref("");
         const createError = ref("");
         const creating = ref(false);
-
-        const logoutError = ref("");
-        const loggingOut = ref(false);
 
         // the session ended on the server (or was never valid): back to login with a notice
         function sessionExpired() {
@@ -29,19 +31,48 @@ export const ClassesPage = defineComponent({
             emit("logged-out", SESSION_EXPIRED);
         }
 
+        // fetches both lists; also what the Refresh button does
         async function load() {
             const session = savedSession();
             if (session === null) return sessionExpired();
             loadError.value = "";
             try {
-                const result = await client.classes.mine({ session });
-                if (loggedOutBy(result)) return sessionExpired();
-                if ("error" in result) loadError.value = errorMessage(result.error, {});
-                else classes.value = result.classes;
+                const [mine, pending] = await Promise.all([
+                    client.classes.mine({ session }),
+                    client.invites.mine({ session }),
+                ]);
+                if (loggedOutBy(mine) || loggedOutBy(pending)) return sessionExpired();
+                if ("error" in mine) loadError.value = errorMessage(mine.error, {});
+                else classes.value = mine.classes;
+                if ("error" in pending) loadError.value = errorMessage(pending.error, {});
+                else invites.value = pending.invites;
             } catch {
                 loadError.value = UNREACHABLE;
             } finally {
                 loading.value = false;
+            }
+        }
+
+        async function accept(invite: string) {
+            acceptError.value = "";
+            const session = savedSession();
+            if (session === null) return sessionExpired();
+            accepting.value = true;
+            try {
+                const result = await client.invites.accept({ session, invite });
+                if (loggedOutBy(result)) return sessionExpired();
+                if ("error" in result) {
+                    acceptError.value = errorMessage(result.error, {
+                        NOT_FOUND: "That invite no longer exists.",
+                        FORBIDDEN: "That invite is for someone else.",
+                    });
+                }
+                // re-fetch either way, so the class moves from invites to classes
+                await load();
+            } catch {
+                acceptError.value = UNREACHABLE;
+            } finally {
+                accepting.value = false;
             }
         }
 
@@ -72,45 +103,41 @@ export const ClassesPage = defineComponent({
             }
         }
 
-        async function logout() {
-            logoutError.value = "";
-            const session = savedSession();
-            loggingOut.value = true;
-            try {
-                if (session !== null) {
-                    const result = await client.auth.logout({ session });
-                    // NOT_FOUND means the session had already ended, so that's still logged out
-                    if ("error" in result && result.error !== "NOT_FOUND") {
-                        logoutError.value = "Couldn't log out. Please try again.";
-                        return;
-                    }
-                }
-                saveSession(null);
-                emit("logged-out");
-            } catch {
-                logoutError.value = UNREACHABLE;
-            } finally {
-                loggingOut.value = false;
-            }
+        function open(row: ClassRow) {
+            emit("open-class", row);
         }
 
         onMounted(load);
 
-        return { classes, loading, loadError, newName, createError, creating, logoutError, loggingOut, create, logout };
+        return {
+            classes, invites, loading, loadError, acceptError, accepting,
+            newName, createError, creating, load, accept, create, open,
+        };
     },
     template: `
-        <header class="top">
-            <h1>Hello {{ username }}!</h1>
-            <button :disabled="loggingOut" @click="logout">Log out</button>
-        </header>
-        <p v-if="logoutError" class="error">{{ logoutError }}</p>
+        <div class="buttons">
+            <button :disabled="loading" @click="load">Refresh</button>
+        </div>
+        <p v-if="loadError" class="error">{{ loadError }}</p>
+
+        <template v-if="invites.length > 0">
+            <h2>Your invites</h2>
+            <ul>
+                <li v-for="i in invites" :key="i.invite">
+                    {{ i.name }} — invited as {{ i.role }}
+                    <button :disabled="accepting" @click="accept(i.invite)">Accept</button>
+                </li>
+            </ul>
+            <p v-if="acceptError" class="error">{{ acceptError }}</p>
+        </template>
 
         <h2>Your classes</h2>
         <p v-if="loading">Loading…</p>
-        <p v-else-if="loadError" class="error">{{ loadError }}</p>
         <p v-else-if="classes.length === 0">You're not in any classes yet.</p>
         <ul v-else>
-            <li v-for="c in classes" :key="c.group">{{ c.name }} — {{ c.role }}</li>
+            <li v-for="c in classes" :key="c.group">
+                <button class="link" @click="open(c)">{{ c.name }}</button> — {{ c.role }}
+            </li>
         </ul>
 
         <h2>New class</h2>

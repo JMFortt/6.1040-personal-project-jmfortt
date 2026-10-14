@@ -86,6 +86,30 @@ Concrete types:
 
 - `StaffRole` — [Application types](../design/types.md), line 8.
 
+## Views
+
+_Views name reusable conditions. Multiple `where` blocks are alternatives._
+
+### (user) is a member of (group)
+
+Authored path: `Classes.IsMember`.
+- Covered by [Classes](../design/compositions/Classes.md), line 35.
+
+```view
+(user) is a member of (group) — inputs (user, group); outputs (); bindings ()
+  where RoleBasedAccessing._role (group, user)
+```
+
+### (user) may manage the members of (group)
+
+Authored path: `Classes.MayManageMembers`.
+- Covered by [Classes](../design/compositions/Classes.md), line 17.
+
+```view
+(user) may manage the members of (group) — inputs (user, group); outputs (); bindings ()
+  where RoleBasedAccessing._role (group, user) has (role: "STAFF")
+```
+
 ## Formers
 
 _Formers name result shapes evaluated when asked. The source former owns_
@@ -116,6 +140,37 @@ Former "the classes of (user)" — inputs (user); bindings (group, name, role); 
       group
       name
       role
+```
+
+### the invites of (user)
+
+Authored path: `Classes.MyInvites`.
+- Covered by [Classes](../design/compositions/Classes.md), line 27.
+
+```former
+Former "the invites of (user)" — inputs (user); bindings (invite, group, name, role); promises exactly one record — forms:
+  each RoleBasedAccessing._invitesForUser (user) has (group, invite, role)
+    where RoleBasedAccessing._group (group) has (name)
+    form a record of
+      group
+      invite
+      name
+      role
+```
+
+### the roster of (group)
+
+Authored path: `Classes.Roster`.
+- Covered by [Classes](../design/compositions/Classes.md), line 37.
+
+```former
+Former "the roster of (group)" — inputs (group); bindings (member, username, role); promises exactly one record — forms:
+  each RoleBasedAccessing._members (group) has (role, user: member)
+    where UserAuthenticating._username (user: member) has (username)
+    form a record of
+      role
+      user: member
+      username
 ```
 
 ## Reactions
@@ -248,6 +303,88 @@ then
   RequestBoundary.respond (requestId, session, user)
 ```
 
+### Classes.Accept
+
+Authored path: `Classes.Accept`.
+- Covered by [Classes](../design/compositions/Classes.md), line 28.
+- Covered by [Classes](../design/compositions/Classes.md), line 32.
+
+```reaction
+when RequestBoundary.request (invite, path: "/invites/accept", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.Accept#2
+
+Authored path: `Classes.Accept`.
+- Covered by [Classes](../design/compositions/Classes.md), line 28.
+- Covered by [Classes](../design/compositions/Classes.md), line 32.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Accept
+where
+  earlier, RequestBoundary.request (invite, path: "/invites/accept", requestId, session)
+then
+  RoleBasedAccessing.accept (invite, user)
+```
+
+### Classes.Accept#3
+
+Authored path: `Classes.Accept`.
+- Covered by [Classes](../design/compositions/Classes.md), line 28.
+- Covered by [Classes](../design/compositions/Classes.md), line 32.
+
+```reaction
+when RoleBasedAccessing.accept (invite, user), asked by Classes.Accept#2
+where
+  earlier, RequestBoundary.request (invite, path: "/invites/accept", requestId, session)
+then
+  RequestBoundary.respond (invite, requestId)
+```
+
+### Classes.ClassRoster
+
+Authored path: `Classes.ClassRoster`.
+- Covered by [Classes](../design/compositions/Classes.md), line 36.
+- Covered by [Classes](../design/compositions/Classes.md), line 41.
+
+```reaction
+when RequestBoundary.request (group, path: "/classes/roster", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.ClassRoster:member#2
+
+Authored path: `Classes.ClassRoster`.
+- Covered by [Classes](../design/compositions/Classes.md), line 36.
+- Covered by [Classes](../design/compositions/Classes.md), line 41.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.ClassRoster
+where
+  earlier, RequestBoundary.request (group, path: "/classes/roster", requestId, session)
+  view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (requestId, roster: former "the roster of (group)" with (group))
+```
+
+### Classes.ClassRoster:not-member#2
+
+Authored path: `Classes.ClassRoster`.
+- Covered by [Classes](../design/compositions/Classes.md), line 36.
+- Covered by [Classes](../design/compositions/Classes.md), line 41.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.ClassRoster
+where
+  earlier, RequestBoundary.request (group, path: "/classes/roster", requestId, session)
+  no view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
 ### Classes.Create
 
 Authored path: `Classes.Create`.
@@ -288,6 +425,79 @@ then
   RequestBoundary.respond (group, requestId)
 ```
 
+### Classes.Invite
+
+Authored path: `Classes.Invite`.
+- Covered by [Classes](../design/compositions/Classes.md), line 18.
+- Covered by [Classes](../design/compositions/Classes.md), line 23.
+
+```reaction
+when RequestBoundary.request (group, path: "/classes/invite", requestId, role, session, username)
+then
+  Sessioning.current (session)
+```
+
+### Classes.Invite:allowed#2
+
+Authored path: `Classes.Invite`.
+- Covered by [Classes](../design/compositions/Classes.md), line 18.
+- Covered by [Classes](../design/compositions/Classes.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Invite
+where
+  earlier, RequestBoundary.request (group, path: "/classes/invite", requestId, role, session, username)
+  view "(user) may manage the members of (group)" with (group, user)
+  UserAuthenticating._user (username) has (user: invitee)
+then
+  RoleBasedAccessing.invite (group, role, user: invitee)
+```
+
+### Classes.Invite:allowed#3
+
+Authored path: `Classes.Invite`.
+- Covered by [Classes](../design/compositions/Classes.md), line 18.
+- Covered by [Classes](../design/compositions/Classes.md), line 23.
+
+```reaction
+when RoleBasedAccessing.invite (group, role, user: invitee, invite), asked by Classes.Invite:allowed#2
+where
+  earlier, RequestBoundary.request (group, path: "/classes/invite", requestId, role, session, username)
+then
+  RequestBoundary.respond (invite, requestId)
+```
+
+### Classes.Invite:not-allowed#2
+
+Authored path: `Classes.Invite`.
+- Covered by [Classes](../design/compositions/Classes.md), line 18.
+- Covered by [Classes](../design/compositions/Classes.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Invite
+where
+  earlier, RequestBoundary.request (group, path: "/classes/invite", requestId, role, session, username)
+  no view "(user) may manage the members of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Classes.Invite:unknown-user#2
+
+Authored path: `Classes.Invite`.
+- Covered by [Classes](../design/compositions/Classes.md), line 18.
+- Covered by [Classes](../design/compositions/Classes.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Invite
+where
+  earlier, RequestBoundary.request (group, path: "/classes/invite", requestId, role, session, username)
+  view "(user) may manage the members of (group)" with (group, user)
+  no UserAuthenticating._user (username)
+then
+  RequestBoundary.respond (error: "NO_SUCH_USER", requestId)
+```
+
 ### Classes.Mine
 
 Authored path: `Classes.Mine`.
@@ -312,6 +522,32 @@ where
   earlier, RequestBoundary.request (path: "/classes/mine", requestId, session)
 then
   RequestBoundary.respond (classes: former "the classes of (user)" with (user), requestId)
+```
+
+### Classes.MyInvitesList
+
+Authored path: `Classes.MyInvitesList`.
+- Covered by [Classes](../design/compositions/Classes.md), line 26.
+- Covered by [Classes](../design/compositions/Classes.md), line 31.
+
+```reaction
+when RequestBoundary.request (path: "/invites/mine", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.MyInvitesList#2
+
+Authored path: `Classes.MyInvitesList`.
+- Covered by [Classes](../design/compositions/Classes.md), line 26.
+- Covered by [Classes](../design/compositions/Classes.md), line 31.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.MyInvitesList
+where
+  earlier, RequestBoundary.request (path: "/invites/mine", requestId, session)
+then
+  RequestBoundary.respond (invites: former "the invites of (user)" with (user), requestId)
 ```
 
 ### DeliverFaultToAsker
@@ -346,4 +582,8 @@ not listed here have no explicit input contract.
 - `/auth/logout` — requires `session`
 - `/auth/register` — requires `username`, `password`
 - `/classes/create` — requires `session`, `name`
+- `/classes/invite` — requires `session`, `group`, `username`, `role`
 - `/classes/mine` — requires `session`
+- `/classes/roster` — requires `session`, `group`
+- `/invites/accept` — requires `session`, `invite`
+- `/invites/mine` — requires `session`

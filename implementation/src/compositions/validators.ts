@@ -13,6 +13,18 @@ function nonemptyString(value: unknown) {
     return typeof value === "string" && value.trim() !== "";
 }
 
+// TAble's roles; RoleBasedAccessing accepts any role, so the app checks them here
+const ROLES = ["LA", "TA", "STAFF"];
+
+export const inviteInput = validator(
+    (value) =>
+        typeof value.session === "string" &&
+        typeof value.group === "string" &&
+        nonemptyString(value.username) &&
+        ROLES.includes(value.role as string),
+    "the username must not be empty and the role must be LA, TA, or STAFF",
+);
+
 export const createClassInput = validator(
     (value) => typeof value.session === "string" && nonemptyString(value.name),
     "the class name must not be empty",

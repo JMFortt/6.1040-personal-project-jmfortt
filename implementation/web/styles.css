@@ -29,6 +29,17 @@ label {
     align-items: center;
 }
 
+/* a button that looks like a link, e.g. a class name you can open */
+.link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #0645ad;
+    text-decoration: underline;
+    cursor: pointer;
+    font: inherit;
+}
+
 .error {
     color: #c00;
     margin: 0;
