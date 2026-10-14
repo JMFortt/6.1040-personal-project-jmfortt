@@ -29,6 +29,44 @@ Defined in [Reserving](../design/concepts/Reserving.md), line 1.
   - `Resource` is `Table` — [Application types](../design/types.md), line 16.
   - `User` is `Name` — [Application types](../design/types.md), line 15.
 
+### Sessioning
+
+Defined in [Sessioning](../design/concepts/Sessioning.md), line 1.
+
+#### Actions
+
+- `start(user: User) : returns (session: Session)`
+- `end(session: Session) : returns ()`
+  - Refuses `SESSION_NOT_FOUND`: There is no such session.
+- `current(session: Session) : returns (user: User)`
+  - Refuses `NOT_LOGGED_IN`: You are not logged in.
+
+#### Instances
+
+- `Sessioning` — instance of `Sessioning` — [Application types](../design/types.md), line 20.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 21.
+
+### UserAuthenticating
+
+Defined in [UserAuthenticating](../design/concepts/UserAuthenticating.md), line 1.
+
+#### Actions
+
+- `register(username: String, password: String) : returns (user: User)`
+  - Refuses `INVALID_CREDENTIALS`: The username and password must not be empty.
+  - Refuses `USERNAME_TAKEN`: That username is already taken.
+- `login(username: String, password: String) : returns (user: User)`
+  - Refuses `LOGIN_FAILED`: The username or password is incorrect.
+
+#### Queries
+
+- `_username(user: User) : optional (username: String)`
+- `_user(username: String) : optional (user: User)`
+
+#### Instances
+
+- `UserAuthenticating` — instance of `UserAuthenticating` — [Application types](../design/types.md), line 18.
+
 ## Application types
 
 Concrete types:
@@ -40,6 +78,19 @@ Concrete types:
 
 _Formers name result shapes evaluated when asked. The source former owns_
 _the authored explanation; this section records the generated shape._
+
+### the account of (user)
+
+Authored path: `Auth.Account`.
+- Covered by [Auth](../design/compositions/Auth.md), line 13.
+
+```former
+Former "the account of (user)" — inputs (user); bindings (username); promises exactly one record — forms:
+  a record of
+    where UserAuthenticating._username (user) has (username)
+    user
+    username
+```
 
 ### the reservation book
 
@@ -57,6 +108,134 @@ Former "the reservation book" — inputs (); bindings (reservation, user, resour
 ```
 
 ## Reactions
+
+### Auth.Current
+
+Authored path: `Auth.Current`.
+- Covered by [Auth](../design/compositions/Auth.md), line 12.
+- Covered by [Auth](../design/compositions/Auth.md), line 18.
+
+```reaction
+when RequestBoundary.request (path: "/auth/current", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Auth.Current#2
+
+Authored path: `Auth.Current`.
+- Covered by [Auth](../design/compositions/Auth.md), line 12.
+- Covered by [Auth](../design/compositions/Auth.md), line 18.
+
+```reaction
+when Sessioning.current (session, user), asked by Auth.Current
+where
+  earlier, RequestBoundary.request (path: "/auth/current", requestId, session)
+then
+  RequestBoundary.respond (account: former "the account of (user)" with (user), requestId)
+```
+
+### Auth.Login
+
+Authored path: `Auth.Login`.
+- Covered by [Auth](../design/compositions/Auth.md), line 5.
+- Covered by [Auth](../design/compositions/Auth.md), line 9.
+
+```reaction
+when RequestBoundary.request (password, path: "/auth/login", requestId, username)
+then
+  UserAuthenticating.login (password, username)
+```
+
+### Auth.Login#2
+
+Authored path: `Auth.Login`.
+- Covered by [Auth](../design/compositions/Auth.md), line 5.
+- Covered by [Auth](../design/compositions/Auth.md), line 9.
+
+```reaction
+when UserAuthenticating.login (password, username, user), asked by Auth.Login
+then
+  Sessioning.start (user)
+```
+
+### Auth.Login#3
+
+Authored path: `Auth.Login`.
+- Covered by [Auth](../design/compositions/Auth.md), line 5.
+- Covered by [Auth](../design/compositions/Auth.md), line 9.
+
+```reaction
+when Sessioning.start (user, session), asked by Auth.Login#2
+where
+  earlier, RequestBoundary.request (password, path: "/auth/login", requestId, username)
+then
+  RequestBoundary.respond (requestId, session, user)
+```
+
+### Auth.Logout
+
+Authored path: `Auth.Logout`.
+- Covered by [Auth](../design/compositions/Auth.md), line 14.
+- Covered by [Auth](../design/compositions/Auth.md), line 19.
+
+```reaction
+when RequestBoundary.request (path: "/auth/logout", requestId, session)
+then
+  Sessioning.end (session)
+```
+
+### Auth.Logout#2
+
+Authored path: `Auth.Logout`.
+- Covered by [Auth](../design/compositions/Auth.md), line 14.
+- Covered by [Auth](../design/compositions/Auth.md), line 19.
+
+```reaction
+when Sessioning.end (session), asked by Auth.Logout
+where
+  earlier, RequestBoundary.request (path: "/auth/logout", requestId, session)
+then
+  RequestBoundary.respond (requestId, session)
+```
+
+### Auth.Register
+
+Authored path: `Auth.Register`.
+- Covered by [Auth](../design/compositions/Auth.md), line 3.
+- Covered by [Auth](../design/compositions/Auth.md), line 8.
+
+```reaction
+when RequestBoundary.request (password, path: "/auth/register", requestId, username)
+then
+  UserAuthenticating.register (password, username)
+```
+
+### Auth.Register#2
+
+Authored path: `Auth.Register`.
+- Covered by [Auth](../design/compositions/Auth.md), line 3.
+- Covered by [Auth](../design/compositions/Auth.md), line 8.
+
+```reaction
+when UserAuthenticating.register (password, username, user), asked by Auth.Register
+then
+  Sessioning.start (user)
+```
+
+### Auth.Register#3
+
+Authored path: `Auth.Register`.
+- Covered by [Auth](../design/compositions/Auth.md), line 3.
+- Covered by [Auth](../design/compositions/Auth.md), line 8.
+
+```reaction
+when Sessioning.start (user, session), asked by Auth.Register#2
+where
+  earlier, RequestBoundary.request (password, path: "/auth/register", requestId, username)
+then
+  RequestBoundary.respond (requestId, session, user)
+```
 
 ### DeliverFaultToAsker
 
@@ -149,5 +328,9 @@ object or lacks a required key. The response uses `INVALID_INPUT` and names
 the path or missing key. A declared default fills an absent key. Endpoints
 not listed here have no explicit input contract.
 
+- `/auth/current` — requires `session`
+- `/auth/login` — requires `username`, `password`
+- `/auth/logout` — requires `session`
+- `/auth/register` — requires `username`, `password`
 - `/reservations/cancel` — requires `reservation`
 - `/reservations/reserve` — requires `user`, `resource`

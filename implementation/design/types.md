@@ -14,4 +14,9 @@ concrete Table
 instantiate Reserving with
   User is Name
   Resource is Table
+
+instantiate UserAuthenticating
+
+instantiate Sessioning with
+  User is UserAuthenticating.User
 ```
