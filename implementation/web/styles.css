@@ -40,6 +40,85 @@ label {
     font: inherit;
 }
 
+/* the weekly grid: an hours column, then one column per day */
+.grid-scroll {
+    overflow-x: auto;
+}
+
+.grid {
+    display: flex;
+    min-width: 36rem;
+    font-size: 0.8rem;
+}
+
+.grid-hours {
+    width: 3.5rem;
+    flex: none;
+}
+
+.grid-day {
+    flex: 1;
+    min-width: 0;
+}
+
+.grid-head {
+    height: 1.5rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+.grid-hour {
+    box-sizing: border-box;
+    text-align: right;
+    padding-right: 0.25rem;
+    color: #666;
+}
+
+/* one grey line per hour, drawn as a repeating background */
+.grid-body {
+    position: relative;
+    border-left: 1px solid #ccc;
+    background-image: linear-gradient(to bottom, #e5e5e5 1px, transparent 1px);
+}
+
+.block {
+    position: absolute;
+    box-sizing: border-box;
+    margin: 1px;
+    padding: 0.15rem;
+    overflow: hidden;
+    border: 1px solid #6a8fd0;
+    border-radius: 4px;
+    background: #dbe7fb;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.block.full {
+    background: #d8f0dc;
+    border-color: #5aa66a;
+}
+
+.block.selected {
+    outline: 2px solid #333;
+}
+
+.panel {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.inline-form {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    max-width: none;
+    margin-top: 0.75rem;
+}
+
 .error {
     color: #c00;
     margin: 0;

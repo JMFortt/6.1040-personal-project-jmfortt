@@ -25,6 +25,47 @@ export const inviteInput = validator(
     "the username must not be empty and the role must be LA, TA, or STAFF",
 );
 
+const WEEKDAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
+
+function strings(value: Record<string, unknown>, keys: string[]) {
+    return keys.every((key) => typeof value[key] === "string");
+}
+
+function isTime(value: unknown) {
+    return typeof value === "string" && !Number.isNaN(new Date(value).getTime());
+}
+
+// ShiftScheduling itself refuses times out of order and capacity below 1; these check the shapes
+export const createSlotInput = validator(
+    (value) =>
+        strings(value, ["session", "group"]) &&
+        WEEKDAYS.includes(value.weekday as string) &&
+        Number.isInteger(value.startMinute) &&
+        Number.isInteger(value.endMinute) &&
+        Number.isInteger(value.capacity),
+    "the weekday must be a day of the week, and times and capacity must be whole numbers",
+);
+
+export const createShiftInput = validator(
+    (value) => strings(value, ["session", "week"]) && isTime(value.start) && isTime(value.end) && Number.isInteger(value.capacity),
+    "start and end must be times and capacity must be a whole number",
+);
+
+export const publishInput = validator(
+    (value) => strings(value, ["session", "group"]) && isTime(value.start) && nonemptyString(value.name),
+    "the week needs a start time and a name",
+);
+
+export const renameInput = validator(
+    (value) => strings(value, ["session", "week"]) && nonemptyString(value.name),
+    "the week's name must not be empty",
+);
+
+// for endpoints that take a session plus some ids, like { session, shift, member }
+export function idsInput(...keys: string[]) {
+    return validator((value) => strings(value, ["session", ...keys]), `${keys.join(" and ")} must be given`);
+}
+
 export const createClassInput = validator(
     (value) => typeof value.session === "string" && nonemptyString(value.name),
     "the class name must not be empty",

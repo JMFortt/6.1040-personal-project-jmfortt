@@ -3,10 +3,11 @@ import { client, savedSession, saveSession, UNREACHABLE } from "./api.ts";
 import { ClassPage, type ClassRow } from "./ClassPage.ts";
 import { ClassesPage } from "./ClassesPage.ts";
 import { LoginPage } from "./LoginPage.ts";
+import { WeekPage } from "./WeekPage.ts";
 
-// shows the login page, or (once logged in) a header plus either the classes list or one class
+// shows the login page, or (once logged in) a header plus the classes list, one class, or one week
 export const App = defineComponent({
-    components: { ClassPage, ClassesPage, LoginPage },
+    components: { ClassPage, ClassesPage, LoginPage, WeekPage },
     setup() {
         const username = ref<string | null>(null);
         const checking = ref(true);
@@ -14,6 +15,8 @@ export const App = defineComponent({
         const notice = ref("");
         // the class being viewed, or null for the classes list
         const openClass = ref<ClassRow | null>(null);
+        // a published week of the open class being viewed, or null
+        const openWeek = ref<string | null>(null);
 
         const logoutError = ref("");
         const loggingOut = ref(false);
@@ -41,6 +44,7 @@ export const App = defineComponent({
         function loggedOut(message?: string) {
             notice.value = message ?? "";
             openClass.value = null;
+            openWeek.value = null;
             logoutError.value = "";
             username.value = null;
         }
@@ -75,7 +79,18 @@ export const App = defineComponent({
             openClass.value = null;
         }
 
-        return { username, checking, notice, openClass, logoutError, loggingOut, loggedIn, loggedOut, logout, open, back };
+        function openWeekPage(week: string) {
+            openWeek.value = week;
+        }
+
+        function backToClass() {
+            openWeek.value = null;
+        }
+
+        return {
+            username, checking, notice, openClass, openWeek, logoutError, loggingOut,
+            loggedIn, loggedOut, logout, open, back, openWeekPage, backToClass,
+        };
     },
     template: `
         <p v-if="checking">Loading…</p>
@@ -86,12 +101,21 @@ export const App = defineComponent({
                 <button :disabled="loggingOut" @click="logout">Log out</button>
             </header>
             <p v-if="logoutError" class="error">{{ logoutError }}</p>
+            <WeekPage
+                v-if="openClass !== null && openWeek !== null"
+                :week="openWeek"
+                :group="openClass.group"
+                :role="openClass.role"
+                @back="backToClass"
+                @logged-out="loggedOut"
+            />
             <ClassPage
-                v-if="openClass !== null"
+                v-else-if="openClass !== null"
                 :group="openClass.group"
                 :name="openClass.name"
                 :role="openClass.role"
                 @back="back"
+                @open-week="openWeekPage"
                 @logged-out="loggedOut"
             />
             <ClassesPage v-else @open-class="open" @logged-out="loggedOut" />

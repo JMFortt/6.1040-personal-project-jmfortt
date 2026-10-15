@@ -1,6 +1,19 @@
 import { conceptSet, registerConcept } from "@mit-sdg/sync-engine/assembly";
 import roleBasedAccessingSpec from "@design/concepts/RoleBasedAccessing.md" with { type: "text" };
 import sessioningSpec from "@design/concepts/Sessioning.md" with { type: "text" };
+import shiftSchedulingSpec from "@design/concepts/ShiftScheduling.md" with { type: "text" };
+import {
+    AlreadyAssigned,
+    InvalidCapacity,
+    InvalidTimes,
+    NotAssigned,
+    ShiftFull,
+    ShiftNotFound,
+    ShiftSchedulingConcept,
+    SlotNotFound,
+    WeekAlreadyPublished,
+    WeekNotFound,
+} from "./concepts/ShiftScheduling.ts";
 import {
     AlreadyInGroup,
     CannotChangeOwnerRole,
@@ -50,9 +63,26 @@ const roleBasedAccessing = registerConcept({
     },
 });
 
+const shiftScheduling = registerConcept({
+    class: ShiftSchedulingConcept,
+    spec: shiftSchedulingSpec,
+    refusals: {
+        INVALID_TIMES: InvalidTimes,
+        INVALID_CAPACITY: InvalidCapacity,
+        SLOT_NOT_FOUND: SlotNotFound,
+        WEEK_NOT_FOUND: WeekNotFound,
+        WEEK_ALREADY_PUBLISHED: WeekAlreadyPublished,
+        SHIFT_NOT_FOUND: ShiftNotFound,
+        ALREADY_ASSIGNED: AlreadyAssigned,
+        SHIFT_FULL: ShiftFull,
+        NOT_ASSIGNED: NotAssigned,
+    },
+});
+
 export const applicationConceptSet = conceptSet({
     UserAuthenticating: userAuthenticating,
     Sessioning: sessioning,
     RoleBasedAccessing: roleBasedAccessing,
+    ShiftScheduling: shiftScheduling,
 });
 export const { concepts } = applicationConceptSet;

@@ -15,8 +15,21 @@ export const policy = httpPolicy({
         NOT_A_MEMBER: "NOT_FOUND",
         CANNOT_CHANGE_OWNER_ROLE: "FORBIDDEN",
         CANNOT_REMOVE_OWNER: "FORBIDDEN",
-        // app-level refusals from the Classes composition
+        INVALID_TIMES: "INVALID_REQUEST",
+        INVALID_CAPACITY: "INVALID_REQUEST",
+        SLOT_NOT_FOUND: "NOT_FOUND",
+        WEEK_NOT_FOUND: "NOT_FOUND",
+        WEEK_ALREADY_PUBLISHED: "CONFLICT",
+        SHIFT_NOT_FOUND: "NOT_FOUND",
+        ALREADY_ASSIGNED: "CONFLICT",
+        SHIFT_FULL: "CONFLICT",
+        NOT_ASSIGNED: "NOT_FOUND",
+        // app-level refusals from the compositions
         NOT_ALLOWED: "FORBIDDEN",
         NO_SUCH_USER: "NOT_FOUND",
+        NO_SUCH_SLOT: "NOT_FOUND",
+        NO_SUCH_WEEK: "NOT_FOUND",
+        NO_SUCH_SHIFT: "NOT_FOUND",
+        NOT_IN_CLASS: "INVALID_REQUEST",
     },
 });

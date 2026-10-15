@@ -38,9 +38,9 @@ Defined in [RoleBasedAccessing](../design/concepts/RoleBasedAccessing.md), line 
 
 #### Instances
 
-- `RoleBasedAccessing` — instance of `RoleBasedAccessing` — [Application types](../design/types.md), line 18.
-  - `Role` is `StaffRole` — [Application types](../design/types.md), line 20.
-  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 19.
+- `RoleBasedAccessing` — instance of `RoleBasedAccessing` — [Application types](../design/types.md), line 19.
+  - `Role` is `StaffRole` — [Application types](../design/types.md), line 21.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 20.
 
 ### Sessioning
 
@@ -56,8 +56,67 @@ Defined in [Sessioning](../design/concepts/Sessioning.md), line 1.
 
 #### Instances
 
-- `Sessioning` — instance of `Sessioning` — [Application types](../design/types.md), line 15.
-  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 16.
+- `Sessioning` — instance of `Sessioning` — [Application types](../design/types.md), line 16.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 17.
+
+### ShiftScheduling
+
+Defined in [ShiftScheduling](../design/concepts/ShiftScheduling.md), line 1.
+
+#### Actions
+
+- `createSlot(context: Context, weekday: Weekday, startMinute: Number, endMinute: Number, capacity: Number) : returns (slot: Slot)`
+  - Refuses `INVALID_TIMES`: The shift must start before it ends.
+  - Refuses `INVALID_CAPACITY`: The shift's capacity must be at least 1.
+- `deleteSlot(slot: Slot) : returns ()`
+  - Refuses `SLOT_NOT_FOUND`: There is no such slot.
+- `assignSlot(slot: Slot, user: User) : returns ()`
+  - Refuses `SLOT_NOT_FOUND`: There is no such slot.
+  - Refuses `ALREADY_ASSIGNED`: That user is already assigned to this shift.
+  - Refuses `SHIFT_FULL`: This shift is already full.
+- `unassignSlot(slot: Slot, user: User) : returns ()`
+  - Refuses `SLOT_NOT_FOUND`: There is no such slot.
+  - Refuses `NOT_ASSIGNED`: That user is not assigned to this shift.
+- `publishWeek(context: Context, start: DateTime, name: String) : returns (week: Week)`
+  - Refuses `WEEK_ALREADY_PUBLISHED`: That week has already been published.
+- `renameWeek(week: Week, name: String) : returns ()`
+  - Refuses `WEEK_NOT_FOUND`: There is no such week.
+- `deleteWeek(week: Week) : returns ()`
+  - Refuses `WEEK_NOT_FOUND`: There is no such week.
+- `createShift(week: Week, start: DateTime, end: DateTime, capacity: Number) : returns (shift: Shift)`
+  - Refuses `WEEK_NOT_FOUND`: There is no such week.
+  - Refuses `INVALID_TIMES`: The shift must start before it ends.
+  - Refuses `INVALID_CAPACITY`: The shift's capacity must be at least 1.
+- `deleteShift(shift: Shift) : returns ()`
+  - Refuses `SHIFT_NOT_FOUND`: There is no such shift.
+- `assign(shift: Shift, user: User) : returns ()`
+  - Refuses `SHIFT_NOT_FOUND`: There is no such shift.
+  - Refuses `ALREADY_ASSIGNED`: That user is already assigned to this shift.
+  - Refuses `SHIFT_FULL`: This shift is already full.
+- `unassign(shift: Shift, user: User) : returns ()`
+  - Refuses `SHIFT_NOT_FOUND`: There is no such shift.
+  - Refuses `NOT_ASSIGNED`: That user is not assigned to this shift.
+- `reassign(shift: Shift, from: User, to: User) : returns ()`
+  - Refuses `SHIFT_NOT_FOUND`: There is no such shift.
+  - Refuses `NOT_ASSIGNED`: That user is not assigned to this shift.
+  - Refuses `ALREADY_ASSIGNED`: That user is already assigned to this shift.
+
+#### Queries
+
+- `_slots(context: Context) : many (slot: Slot, weekday: Weekday, startMinute: Number, endMinute: Number, capacity: Number)`
+- `_slot(slot: Slot) : optional (context: Context, weekday: Weekday, startMinute: Number, endMinute: Number, capacity: Number)`
+- `_slotAssignees(slot: Slot) : many (user: User)`
+- `_weeks(context: Context) : many (week: Week, name: String, start: DateTime)`
+- `_week(week: Week) : optional (context: Context, name: String, start: DateTime)`
+- `_shiftsInWeek(week: Week) : many (shift: Shift, start: DateTime, end: DateTime, capacity: Number)`
+- `_shift(shift: Shift) : optional (week: Week, context: Context, start: DateTime, end: DateTime, capacity: Number)`
+- `_assignees(shift: Shift) : many (user: User)`
+
+#### Instances
+
+- `ShiftScheduling` — instance of `ShiftScheduling` — [Application types](../design/types.md), line 23.
+  - `Context` is `RoleBasedAccessing.Group` — [Application types](../design/types.md), line 25.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 24.
 
 ### UserAuthenticating
 
@@ -78,13 +137,13 @@ Defined in [UserAuthenticating](../design/concepts/UserAuthenticating.md), line 
 
 #### Instances
 
-- `UserAuthenticating` — instance of `UserAuthenticating` — [Application types](../design/types.md), line 13.
+- `UserAuthenticating` — instance of `UserAuthenticating` — [Application types](../design/types.md), line 14.
 
 ## Application types
 
 Concrete types:
 
-- `StaffRole` — [Application types](../design/types.md), line 8.
+- `StaffRole` — [Application types](../design/types.md), line 9.
 
 ## Views
 
@@ -92,17 +151,33 @@ _Views name reusable conditions. Multiple `where` blocks are alternatives._
 
 ### (user) is a member of (group)
 
-Authored path: `Classes.IsMember`.
+Authored path: `Access.IsMember`.
+- Covered by [Access](../design/compositions/Access.md), line 13.
 - Covered by [Classes](../design/compositions/Classes.md), line 35.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 9.
 
 ```view
 (user) is a member of (group) — inputs (user, group); outputs (); bindings ()
   where RoleBasedAccessing._role (group, user)
 ```
 
+### (user) may edit the schedule of (group)
+
+Authored path: `Access.MayEditSchedule`.
+- Covered by [Access](../design/compositions/Access.md), line 14.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 8.
+
+```view
+(user) may edit the schedule of (group) — inputs (user, group); outputs (); bindings (role)
+  where
+    RoleBasedAccessing._role (group, user) has (role)
+    role is among ["TA", "STAFF"]
+```
+
 ### (user) may manage the members of (group)
 
-Authored path: `Classes.MayManageMembers`.
+Authored path: `Access.MayManageMembers`.
+- Covered by [Access](../design/compositions/Access.md), line 15.
 - Covered by [Classes](../design/compositions/Classes.md), line 17.
 
 ```view
@@ -158,6 +233,45 @@ Former "the invites of (user)" — inputs (user); bindings (invite, group, name,
       role
 ```
 
+### the published week (week)
+
+Authored path: `Schedule.WeekView`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 19.
+
+```former
+Former "the published week (week)" — inputs (week); bindings (name, start, shift, shiftStart, end, capacity, member, username); promises exactly one record — forms:
+  a record of
+    where ShiftScheduling._week (week) has (name, start)
+    name
+    shifts: each ShiftScheduling._shiftsInWeek (week) has (capacity, end, shift, start: shiftStart)
+      form a record of
+        assignees: each ShiftScheduling._assignees (shift) has (user: member)
+          where UserAuthenticating._username (user: member) has (username)
+          form a record of
+            user: member
+            username
+        capacity
+        end
+        shift
+        start: shiftStart
+    start
+    week
+```
+
+### the published weeks of (group)
+
+Authored path: `Schedule.Weeks`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 17.
+
+```former
+Former "the published weeks of (group)" — inputs (group); bindings (week, name, start); promises exactly one record — forms:
+  each ShiftScheduling._weeks (context: group) has (name, start, week)
+    form a record of
+      name
+      start
+      week
+```
+
 ### the roster of (group)
 
 Authored path: `Classes.Roster`.
@@ -171,6 +285,27 @@ Former "the roster of (group)" — inputs (group); bindings (member, username, r
       role
       user: member
       username
+```
+
+### the weekly template of (group)
+
+Authored path: `Schedule.Template`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 15.
+
+```former
+Former "the weekly template of (group)" — inputs (group); bindings (slot, weekday, startMinute, endMinute, capacity, member, username); promises exactly one record — forms:
+  each ShiftScheduling._slots (context: group) has (capacity, endMinute, slot, startMinute, weekday)
+    form a record of
+      assignees: each ShiftScheduling._slotAssignees (slot) has (user: member)
+        where UserAuthenticating._username (user: member) has (username)
+        form a record of
+          user: member
+          username
+      capacity
+      endMinute
+      slot
+      startMinute
+      weekday
 ```
 
 ## Reactions
@@ -570,6 +705,954 @@ then
   RequestBoundary.respond (error: message, requestId)
 ```
 
+### Schedule.AssignShift
+
+Authored path: `Schedule.AssignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+
+```reaction
+when RequestBoundary.request (member, path: "/schedule/shifts/assign", requestId, session, shift)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.AssignShift:allowed#2
+
+Authored path: `Schedule.AssignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.AssignShift
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/assign", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+  view "(user) is a member of (group)" with (group, user: member)
+then
+  ShiftScheduling.assign (shift, user: member)
+```
+
+### Schedule.AssignShift:allowed#3
+
+Authored path: `Schedule.AssignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+
+```reaction
+when ShiftScheduling.assign (shift, user: member), asked by Schedule.AssignShift:allowed#2
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/assign", requestId, session, shift)
+then
+  RequestBoundary.respond (requestId, shift)
+```
+
+### Schedule.AssignShift:no-shift#2
+
+Authored path: `Schedule.AssignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.AssignShift
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/assign", requestId, session, shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Schedule.AssignShift:not-allowed#2
+
+Authored path: `Schedule.AssignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.AssignShift
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/assign", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.AssignShift:not-in-class#2
+
+Authored path: `Schedule.AssignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.AssignShift
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/assign", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+  no view "(user) is a member of (group)" with (group, user: member)
+then
+  RequestBoundary.respond (error: "NOT_IN_CLASS", requestId)
+```
+
+### Schedule.AssignSlot
+
+Authored path: `Schedule.AssignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 31.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+
+```reaction
+when RequestBoundary.request (member, path: "/schedule/slots/assign", requestId, session, slot)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.AssignSlot:allowed#2
+
+Authored path: `Schedule.AssignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 31.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.AssignSlot
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/assign", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+  view "(user) is a member of (group)" with (group, user: member)
+then
+  ShiftScheduling.assignSlot (slot, user: member)
+```
+
+### Schedule.AssignSlot:allowed#3
+
+Authored path: `Schedule.AssignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 31.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+
+```reaction
+when ShiftScheduling.assignSlot (slot, user: member), asked by Schedule.AssignSlot:allowed#2
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/assign", requestId, session, slot)
+then
+  RequestBoundary.respond (requestId, slot)
+```
+
+### Schedule.AssignSlot:no-slot#2
+
+Authored path: `Schedule.AssignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 31.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.AssignSlot
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/assign", requestId, session, slot)
+  no ShiftScheduling._slot (slot)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SLOT", requestId)
+```
+
+### Schedule.AssignSlot:not-allowed#2
+
+Authored path: `Schedule.AssignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 31.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.AssignSlot
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/assign", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.AssignSlot:not-in-class#2
+
+Authored path: `Schedule.AssignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 31.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.AssignSlot
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/assign", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+  no view "(user) is a member of (group)" with (group, user: member)
+then
+  RequestBoundary.respond (error: "NOT_IN_CLASS", requestId)
+```
+
+### Schedule.CreateShift
+
+Authored path: `Schedule.CreateShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+
+```reaction
+when RequestBoundary.request (capacity, end, path: "/schedule/shifts/create", requestId, session, start, week)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.CreateShift:allowed#2
+
+Authored path: `Schedule.CreateShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.CreateShift
+where
+  earlier, RequestBoundary.request (capacity, end, path: "/schedule/shifts/create", requestId, session, start, week)
+  ShiftScheduling._week (week) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.createShift (capacity, end, start, week)
+```
+
+### Schedule.CreateShift:allowed#3
+
+Authored path: `Schedule.CreateShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+
+```reaction
+when ShiftScheduling.createShift (capacity, end, start, week, shift), asked by Schedule.CreateShift:allowed#2
+where
+  earlier, RequestBoundary.request (capacity, end, path: "/schedule/shifts/create", requestId, session, start, week)
+then
+  RequestBoundary.respond (requestId, shift)
+```
+
+### Schedule.CreateShift:no-week#2
+
+Authored path: `Schedule.CreateShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.CreateShift
+where
+  earlier, RequestBoundary.request (capacity, end, path: "/schedule/shifts/create", requestId, session, start, week)
+  no ShiftScheduling._week (week)
+then
+  RequestBoundary.respond (error: "NO_SUCH_WEEK", requestId)
+```
+
+### Schedule.CreateShift:not-allowed#2
+
+Authored path: `Schedule.CreateShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.CreateShift
+where
+  earlier, RequestBoundary.request (capacity, end, path: "/schedule/shifts/create", requestId, session, start, week)
+  ShiftScheduling._week (week) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.CreateSlot
+
+Authored path: `Schedule.CreateSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 29.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 36.
+
+```reaction
+when RequestBoundary.request (capacity, endMinute, group, path: "/schedule/slots/create", requestId, session, startMinute, weekday)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.CreateSlot:allowed#2
+
+Authored path: `Schedule.CreateSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 29.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 36.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.CreateSlot
+where
+  earlier, RequestBoundary.request (capacity, endMinute, group, path: "/schedule/slots/create", requestId, session, startMinute, weekday)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.createSlot (capacity, context: group, endMinute, startMinute, weekday)
+```
+
+### Schedule.CreateSlot:allowed#3
+
+Authored path: `Schedule.CreateSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 29.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 36.
+
+```reaction
+when ShiftScheduling.createSlot (capacity, context: group, endMinute, startMinute, weekday, slot), asked by Schedule.CreateSlot:allowed#2
+where
+  earlier, RequestBoundary.request (capacity, endMinute, group, path: "/schedule/slots/create", requestId, session, startMinute, weekday)
+then
+  RequestBoundary.respond (requestId, slot)
+```
+
+### Schedule.CreateSlot:not-allowed#2
+
+Authored path: `Schedule.CreateSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 29.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 36.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.CreateSlot
+where
+  earlier, RequestBoundary.request (capacity, endMinute, group, path: "/schedule/slots/create", requestId, session, startMinute, weekday)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.DeleteShift
+
+Authored path: `Schedule.DeleteShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+
+```reaction
+when RequestBoundary.request (path: "/schedule/shifts/delete", requestId, session, shift)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.DeleteShift:allowed#2
+
+Authored path: `Schedule.DeleteShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteShift
+where
+  earlier, RequestBoundary.request (path: "/schedule/shifts/delete", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.deleteShift (shift)
+```
+
+### Schedule.DeleteShift:allowed#3
+
+Authored path: `Schedule.DeleteShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+
+```reaction
+when ShiftScheduling.deleteShift (shift), asked by Schedule.DeleteShift:allowed#2
+where
+  earlier, RequestBoundary.request (path: "/schedule/shifts/delete", requestId, session, shift)
+then
+  RequestBoundary.respond (requestId, shift)
+```
+
+### Schedule.DeleteShift:no-shift#2
+
+Authored path: `Schedule.DeleteShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteShift
+where
+  earlier, RequestBoundary.request (path: "/schedule/shifts/delete", requestId, session, shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Schedule.DeleteShift:not-allowed#2
+
+Authored path: `Schedule.DeleteShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteShift
+where
+  earlier, RequestBoundary.request (path: "/schedule/shifts/delete", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.DeleteSlot
+
+Authored path: `Schedule.DeleteSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 30.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+
+```reaction
+when RequestBoundary.request (path: "/schedule/slots/delete", requestId, session, slot)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.DeleteSlot:allowed#2
+
+Authored path: `Schedule.DeleteSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 30.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteSlot
+where
+  earlier, RequestBoundary.request (path: "/schedule/slots/delete", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.deleteSlot (slot)
+```
+
+### Schedule.DeleteSlot:allowed#3
+
+Authored path: `Schedule.DeleteSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 30.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+
+```reaction
+when ShiftScheduling.deleteSlot (slot), asked by Schedule.DeleteSlot:allowed#2
+where
+  earlier, RequestBoundary.request (path: "/schedule/slots/delete", requestId, session, slot)
+then
+  RequestBoundary.respond (requestId, slot)
+```
+
+### Schedule.DeleteSlot:no-slot#2
+
+Authored path: `Schedule.DeleteSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 30.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteSlot
+where
+  earlier, RequestBoundary.request (path: "/schedule/slots/delete", requestId, session, slot)
+  no ShiftScheduling._slot (slot)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SLOT", requestId)
+```
+
+### Schedule.DeleteSlot:not-allowed#2
+
+Authored path: `Schedule.DeleteSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 30.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteSlot
+where
+  earlier, RequestBoundary.request (path: "/schedule/slots/delete", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.DeleteWeek
+
+Authored path: `Schedule.DeleteWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+
+```reaction
+when RequestBoundary.request (path: "/schedule/weeks/delete", requestId, session, week)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.DeleteWeek:allowed#2
+
+Authored path: `Schedule.DeleteWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteWeek
+where
+  earlier, RequestBoundary.request (path: "/schedule/weeks/delete", requestId, session, week)
+  ShiftScheduling._week (week) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.deleteWeek (week)
+```
+
+### Schedule.DeleteWeek:allowed#3
+
+Authored path: `Schedule.DeleteWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+
+```reaction
+when ShiftScheduling.deleteWeek (week), asked by Schedule.DeleteWeek:allowed#2
+where
+  earlier, RequestBoundary.request (path: "/schedule/weeks/delete", requestId, session, week)
+then
+  RequestBoundary.respond (requestId, week)
+```
+
+### Schedule.DeleteWeek:no-week#2
+
+Authored path: `Schedule.DeleteWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteWeek
+where
+  earlier, RequestBoundary.request (path: "/schedule/weeks/delete", requestId, session, week)
+  no ShiftScheduling._week (week)
+then
+  RequestBoundary.respond (error: "NO_SUCH_WEEK", requestId)
+```
+
+### Schedule.DeleteWeek:not-allowed#2
+
+Authored path: `Schedule.DeleteWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.DeleteWeek
+where
+  earlier, RequestBoundary.request (path: "/schedule/weeks/delete", requestId, session, week)
+  ShiftScheduling._week (week) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.ListWeeks
+
+Authored path: `Schedule.ListWeeks`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 16.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 23.
+
+```reaction
+when RequestBoundary.request (group, path: "/schedule/weeks", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.ListWeeks:member#2
+
+Authored path: `Schedule.ListWeeks`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 16.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.ListWeeks
+where
+  earlier, RequestBoundary.request (group, path: "/schedule/weeks", requestId, session)
+  view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (requestId, weeks: former "the published weeks of (group)" with (group))
+```
+
+### Schedule.ListWeeks:not-member#2
+
+Authored path: `Schedule.ListWeeks`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 16.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.ListWeeks
+where
+  earlier, RequestBoundary.request (group, path: "/schedule/weeks", requestId, session)
+  no view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.PublishWeek
+
+Authored path: `Schedule.PublishWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 50.
+
+```reaction
+when RequestBoundary.request (group, name, path: "/schedule/weeks/publish", requestId, session, start)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.PublishWeek:allowed#2
+
+Authored path: `Schedule.PublishWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 50.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.PublishWeek
+where
+  earlier, RequestBoundary.request (group, name, path: "/schedule/weeks/publish", requestId, session, start)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.publishWeek (context: group, name, start)
+```
+
+### Schedule.PublishWeek:allowed#3
+
+Authored path: `Schedule.PublishWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 50.
+
+```reaction
+when ShiftScheduling.publishWeek (context: group, name, start, week), asked by Schedule.PublishWeek:allowed#2
+where
+  earlier, RequestBoundary.request (group, name, path: "/schedule/weeks/publish", requestId, session, start)
+then
+  RequestBoundary.respond (requestId, week)
+```
+
+### Schedule.PublishWeek:not-allowed#2
+
+Authored path: `Schedule.PublishWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 50.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.PublishWeek
+where
+  earlier, RequestBoundary.request (group, name, path: "/schedule/weeks/publish", requestId, session, start)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.RenameWeek
+
+Authored path: `Schedule.RenameWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+
+```reaction
+when RequestBoundary.request (name, path: "/schedule/weeks/rename", requestId, session, week)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.RenameWeek:allowed#2
+
+Authored path: `Schedule.RenameWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.RenameWeek
+where
+  earlier, RequestBoundary.request (name, path: "/schedule/weeks/rename", requestId, session, week)
+  ShiftScheduling._week (week) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.renameWeek (name, week)
+```
+
+### Schedule.RenameWeek:allowed#3
+
+Authored path: `Schedule.RenameWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+
+```reaction
+when ShiftScheduling.renameWeek (name, week), asked by Schedule.RenameWeek:allowed#2
+where
+  earlier, RequestBoundary.request (name, path: "/schedule/weeks/rename", requestId, session, week)
+then
+  RequestBoundary.respond (requestId, week)
+```
+
+### Schedule.RenameWeek:no-week#2
+
+Authored path: `Schedule.RenameWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.RenameWeek
+where
+  earlier, RequestBoundary.request (name, path: "/schedule/weeks/rename", requestId, session, week)
+  no ShiftScheduling._week (week)
+then
+  RequestBoundary.respond (error: "NO_SUCH_WEEK", requestId)
+```
+
+### Schedule.RenameWeek:not-allowed#2
+
+Authored path: `Schedule.RenameWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.RenameWeek
+where
+  earlier, RequestBoundary.request (name, path: "/schedule/weeks/rename", requestId, session, week)
+  ShiftScheduling._week (week) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.UnassignShift
+
+Authored path: `Schedule.UnassignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+
+```reaction
+when RequestBoundary.request (member, path: "/schedule/shifts/unassign", requestId, session, shift)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.UnassignShift:allowed#2
+
+Authored path: `Schedule.UnassignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.UnassignShift
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/unassign", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.unassign (shift, user: member)
+```
+
+### Schedule.UnassignShift:allowed#3
+
+Authored path: `Schedule.UnassignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+
+```reaction
+when ShiftScheduling.unassign (shift, user: member), asked by Schedule.UnassignShift:allowed#2
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/unassign", requestId, session, shift)
+then
+  RequestBoundary.respond (requestId, shift)
+```
+
+### Schedule.UnassignShift:no-shift#2
+
+Authored path: `Schedule.UnassignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.UnassignShift
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/unassign", requestId, session, shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Schedule.UnassignShift:not-allowed#2
+
+Authored path: `Schedule.UnassignShift`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.UnassignShift
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/shifts/unassign", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.UnassignSlot
+
+Authored path: `Schedule.UnassignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 32.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+
+```reaction
+when RequestBoundary.request (member, path: "/schedule/slots/unassign", requestId, session, slot)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.UnassignSlot:allowed#2
+
+Authored path: `Schedule.UnassignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 32.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.UnassignSlot
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/unassign", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.unassignSlot (slot, user: member)
+```
+
+### Schedule.UnassignSlot:allowed#3
+
+Authored path: `Schedule.UnassignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 32.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+
+```reaction
+when ShiftScheduling.unassignSlot (slot, user: member), asked by Schedule.UnassignSlot:allowed#2
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/unassign", requestId, session, slot)
+then
+  RequestBoundary.respond (requestId, slot)
+```
+
+### Schedule.UnassignSlot:no-slot#2
+
+Authored path: `Schedule.UnassignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 32.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.UnassignSlot
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/unassign", requestId, session, slot)
+  no ShiftScheduling._slot (slot)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SLOT", requestId)
+```
+
+### Schedule.UnassignSlot:not-allowed#2
+
+Authored path: `Schedule.UnassignSlot`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 32.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.UnassignSlot
+where
+  earlier, RequestBoundary.request (member, path: "/schedule/slots/unassign", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.ViewTemplate
+
+Authored path: `Schedule.ViewTemplate`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 14.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 22.
+
+```reaction
+when RequestBoundary.request (group, path: "/schedule/template", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.ViewTemplate:member#2
+
+Authored path: `Schedule.ViewTemplate`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 14.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 22.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.ViewTemplate
+where
+  earlier, RequestBoundary.request (group, path: "/schedule/template", requestId, session)
+  view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (requestId, template: former "the weekly template of (group)" with (group))
+```
+
+### Schedule.ViewTemplate:not-member#2
+
+Authored path: `Schedule.ViewTemplate`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 14.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 22.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.ViewTemplate
+where
+  earlier, RequestBoundary.request (group, path: "/schedule/template", requestId, session)
+  no view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.ViewWeek
+
+Authored path: `Schedule.ViewWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 18.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 24.
+
+```reaction
+when RequestBoundary.request (path: "/schedule/week", requestId, session, week)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.ViewWeek:member#2
+
+Authored path: `Schedule.ViewWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 18.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 24.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.ViewWeek
+where
+  earlier, RequestBoundary.request (path: "/schedule/week", requestId, session, week)
+  ShiftScheduling._week (week) has (context: group)
+  view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (requestId, week: former "the published week (week)" with (week))
+```
+
+### Schedule.ViewWeek:no-week#2
+
+Authored path: `Schedule.ViewWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 18.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 24.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.ViewWeek
+where
+  earlier, RequestBoundary.request (path: "/schedule/week", requestId, session, week)
+  no ShiftScheduling._week (week)
+then
+  RequestBoundary.respond (error: "NO_SUCH_WEEK", requestId)
+```
+
+### Schedule.ViewWeek:not-member#2
+
+Authored path: `Schedule.ViewWeek`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 18.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 24.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.ViewWeek
+where
+  earlier, RequestBoundary.request (path: "/schedule/week", requestId, session, week)
+  ShiftScheduling._week (week) has (context: group)
+  no view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
 ## Endpoint input contracts
 
 Before recording an action ask, the boundary rejects a body that is not an
@@ -587,3 +1670,17 @@ not listed here have no explicit input contract.
 - `/classes/roster` — requires `session`, `group`
 - `/invites/accept` — requires `session`, `invite`
 - `/invites/mine` — requires `session`
+- `/schedule/shifts/assign` — requires `session`, `shift`, `member`
+- `/schedule/shifts/create` — requires `session`, `week`, `start`, `end`, `capacity`
+- `/schedule/shifts/delete` — requires `session`, `shift`
+- `/schedule/shifts/unassign` — requires `session`, `shift`, `member`
+- `/schedule/slots/assign` — requires `session`, `slot`, `member`
+- `/schedule/slots/create` — requires `session`, `group`, `weekday`, `startMinute`, `endMinute`, `capacity`
+- `/schedule/slots/delete` — requires `session`, `slot`
+- `/schedule/slots/unassign` — requires `session`, `slot`, `member`
+- `/schedule/template` — requires `session`, `group`
+- `/schedule/week` — requires `session`, `week`
+- `/schedule/weeks` — requires `session`, `group`
+- `/schedule/weeks/delete` — requires `session`, `week`
+- `/schedule/weeks/publish` — requires `session`, `group`, `start`, `name`
+- `/schedule/weeks/rename` — requires `session`, `week`, `name`

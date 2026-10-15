@@ -1,21 +1,10 @@
 import { endpoint, receive, respond } from "@mit-sdg/sync-engine/boundary";
-import { each, former, no, view, where } from "@mit-sdg/sync-engine/language";
+import { each, former, no, where } from "@mit-sdg/sync-engine/language";
 import { concepts } from "../concepts.ts";
+import { IsMember, MayManageMembers } from "./Access.ts";
 import { createClassInput, inviteInput } from "./validators.ts";
 
 const { Sessioning, UserAuthenticating, RoleBasedAccessing } = concepts;
-
-// --- access policy: who may do what in a class ---
-
-// only STAFF can invite people to (and later manage) a class
-const MayManageMembers = view("(user) may manage the members of (group)", ({ user, group }, _outputs, _bindings) =>
-    where(RoleBasedAccessing._role({ group, user }).is({ role: "STAFF" })),
-).holds();
-
-// any role at all makes you a member
-const IsMember = view("(user) is a member of (group)", ({ user, group }, _outputs, _bindings) =>
-    where(RoleBasedAccessing._role({ group, user })),
-).holds();
 
 // --- formers ---
 
@@ -118,8 +107,6 @@ const ClassRoster = endpoint(
 );
 
 export const composition = {
-    MayManageMembers,
-    IsMember,
     MyClasses,
     MyInvites,
     Roster,

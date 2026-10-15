@@ -130,6 +130,188 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "INVALID_INPUT" | "NOT_LOGGED_IN" };
   };
+  "/schedule/shifts/assign": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assign"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assign"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assign"]>[0], ["shift"]>>;
+    };
+    error: { error: AppWideError | "ALREADY_ASSIGNED" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_IN_CLASS" | "NOT_LOGGED_IN" | "NO_SUCH_SHIFT" | "SHIFT_FULL" | "SHIFT_NOT_FOUND" };
+  };
+  "/schedule/shifts/create": {
+    input: {
+      "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["capacity"]>>;
+      "end": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["end"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "start": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["start"]>>;
+      "week": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["week"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>>, ["shift"]>>;
+    };
+    error: { error: AppWideError | "INVALID_CAPACITY" | "INVALID_INPUT" | "INVALID_TIMES" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_WEEK" | "WEEK_NOT_FOUND" };
+  };
+  "/schedule/shifts/delete": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteShift"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteShift"]>[0], ["shift"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_SHIFT" | "SHIFT_NOT_FOUND" };
+  };
+  "/schedule/shifts/unassign": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassign"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassign"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassign"]>[0], ["shift"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_ASSIGNED" | "NOT_LOGGED_IN" | "NO_SUCH_SHIFT" | "SHIFT_NOT_FOUND" };
+  };
+  "/schedule/slots/assign": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assignSlot"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "slot": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assignSlot"]>[0], ["slot"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slot"]>[0], ["slot"]>]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assignSlot"]>[0], ["slot"]>>;
+    };
+    error: { error: AppWideError | "ALREADY_ASSIGNED" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_IN_CLASS" | "NOT_LOGGED_IN" | "NO_SUCH_SLOT" | "SHIFT_FULL" | "SLOT_NOT_FOUND" };
+  };
+  "/schedule/slots/create": {
+    input: {
+      "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["capacity"]>>;
+      "endMinute": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["endMinute"]>>;
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["context"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "startMinute": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["startMinute"]>>;
+      "weekday": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["weekday"]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>>, ["slot"]>>;
+    };
+    error: { error: AppWideError | "INVALID_CAPACITY" | "INVALID_INPUT" | "INVALID_TIMES" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
+  };
+  "/schedule/slots/delete": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "slot": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteSlot"]>[0], ["slot"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slot"]>[0], ["slot"]>]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteSlot"]>[0], ["slot"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_SLOT" | "SLOT_NOT_FOUND" };
+  };
+  "/schedule/slots/unassign": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassignSlot"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "slot": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassignSlot"]>[0], ["slot"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slot"]>[0], ["slot"]>]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassignSlot"]>[0], ["slot"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_ASSIGNED" | "NOT_LOGGED_IN" | "NO_SUCH_SLOT" | "SLOT_NOT_FOUND" };
+  };
+  "/schedule/template": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "template": {
+        "assignees": {
+          "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slotAssignees"]>>>, ["user"]>]>>;
+          "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+        }[];
+        "capacity": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["capacity"]>>;
+        "endMinute": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["endMinute"]>>;
+        "slot": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["slot"]>>;
+        "startMinute": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["startMinute"]>>;
+        "weekday": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["weekday"]>>;
+      }[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
+  };
+  "/schedule/week": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>>;
+    };
+    output: {
+      "week": {
+        "name": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>>>, ["name"]>>;
+        "shifts": {
+          "assignees": {
+            "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>]>>;
+            "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+          }[];
+          "capacity": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["capacity"]>>;
+          "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+          "shift": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>>;
+          "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        }[];
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>>>, ["start"]>>;
+        "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>>;
+      };
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_WEEK" };
+  };
+  "/schedule/weeks": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "weeks": {
+        "name": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>>>, ["name"]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>>>, ["start"]>>;
+        "week": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>>>, ["week"]>>;
+      }[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
+  };
+  "/schedule/weeks/delete": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "week": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteWeek"]>[0], ["week"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>]>>;
+    };
+    output: {
+      "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteWeek"]>[0], ["week"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_WEEK" | "WEEK_NOT_FOUND" };
+  };
+  "/schedule/weeks/publish": {
+    input: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["publishWeek"]>[0], ["context"]>>;
+      "name": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["publishWeek"]>[0], ["name"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "start": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["publishWeek"]>[0], ["start"]>>;
+    };
+    output: {
+      "week": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["publishWeek"]>>, ["week"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "WEEK_ALREADY_PUBLISHED" };
+  };
+  "/schedule/weeks/rename": {
+    input: {
+      "name": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["renameWeek"]>[0], ["name"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "week": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["renameWeek"]>[0], ["week"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>]>>;
+    };
+    output: {
+      "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["renameWeek"]>[0], ["week"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_WEEK" | "WEEK_NOT_FOUND" };
+  };
 };
 
 export type HttpAppWideError = never;
@@ -250,5 +432,187 @@ export type TAbleWireHttp = {
       }[];
     };
     error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/schedule/shifts/assign": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assign"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assign"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assign"]>[0], ["shift"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/shifts/create": {
+    input: {
+      "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["capacity"]>>;
+      "end": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["end"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "start": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["start"]>>;
+      "week": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["week"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>>, ["shift"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/shifts/delete": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteShift"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteShift"]>[0], ["shift"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/shifts/unassign": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassign"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassign"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassign"]>[0], ["shift"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/slots/assign": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assignSlot"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "slot": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assignSlot"]>[0], ["slot"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slot"]>[0], ["slot"]>]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assignSlot"]>[0], ["slot"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/slots/create": {
+    input: {
+      "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["capacity"]>>;
+      "endMinute": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["endMinute"]>>;
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["context"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "startMinute": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["startMinute"]>>;
+      "weekday": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>[0], ["weekday"]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createSlot"]>>, ["slot"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/schedule/slots/delete": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "slot": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteSlot"]>[0], ["slot"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slot"]>[0], ["slot"]>]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteSlot"]>[0], ["slot"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/slots/unassign": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassignSlot"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "slot": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassignSlot"]>[0], ["slot"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slot"]>[0], ["slot"]>]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["unassignSlot"]>[0], ["slot"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/template": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "template": {
+        "assignees": {
+          "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slotAssignees"]>>>, ["user"]>]>>;
+          "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+        }[];
+        "capacity": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["capacity"]>>;
+        "endMinute": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["endMinute"]>>;
+        "slot": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["slot"]>>;
+        "startMinute": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["startMinute"]>>;
+        "weekday": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slots"]>>>, ["weekday"]>>;
+      }[];
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/schedule/week": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>>;
+    };
+    output: {
+      "week": {
+        "name": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>>>, ["name"]>>;
+        "shifts": {
+          "assignees": {
+            "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>]>>;
+            "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+          }[];
+          "capacity": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["capacity"]>>;
+          "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+          "shift": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>>;
+          "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        }[];
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>>>, ["start"]>>;
+        "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>>;
+      };
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/weeks": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "weeks": {
+        "name": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>>>, ["name"]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>>>, ["start"]>>;
+        "week": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>>>, ["week"]>>;
+      }[];
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/schedule/weeks/delete": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "week": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteWeek"]>[0], ["week"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>]>>;
+    };
+    output: {
+      "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteWeek"]>[0], ["week"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/weeks/publish": {
+    input: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["publishWeek"]>[0], ["context"]>>;
+      "name": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["publishWeek"]>[0], ["name"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "start": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["publishWeek"]>[0], ["start"]>>;
+    };
+    output: {
+      "week": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["publishWeek"]>>, ["week"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/schedule/weeks/rename": {
+    input: {
+      "name": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["renameWeek"]>[0], ["name"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "week": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["renameWeek"]>[0], ["week"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>]>>;
+    };
+    output: {
+      "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["renameWeek"]>[0], ["week"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
   };
 };
