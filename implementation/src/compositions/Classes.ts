@@ -1,10 +1,32 @@
 import { endpoint, receive, respond } from "@mit-sdg/sync-engine/boundary";
-import { each, former, no, where } from "@mit-sdg/sync-engine/language";
+import { each, former, is, no, now, reaction, when, where } from "@mit-sdg/sync-engine/language";
 import { concepts } from "../concepts.ts";
 import { IsMember, MayManageMembers } from "./Access.ts";
-import { createClassInput, inviteInput } from "./validators.ts";
+import { changeRoleInput, createClassInput, idsInput, inviteInput } from "./validators.ts";
 
-const { Sessioning, UserAuthenticating, RoleBasedAccessing } = concepts;
+const { Sessioning, UserAuthenticating, RoleBasedAccessing, ShiftScheduling, ShiftTrading } = concepts;
+
+// --- cleanup when someone leaves or is removed from a class ---
+
+// they come off the template and off every shift that hasn't started yet; past shifts keep them,
+// so attendance history still makes sense
+const RemoveFromSchedule = reaction(({ group, user, instant }) =>
+    when(RoleBasedAccessing.removeMember({ group, user }).responds({}))
+        .where(now(instant))
+        .then(ShiftScheduling.removeFromSchedule({ context: group, user, from: instant })),
+);
+
+// any cover requests they made in that class that are still active are withdrawn
+const WithdrawCoverRequests = reaction(({ group, user, week, shift, request, status }) =>
+    when(RoleBasedAccessing.removeMember({ group, user }).responds({}))
+        .where(
+            ShiftScheduling._weeks({ context: group }).is({ week }),
+            ShiftScheduling._shiftsInWeek({ week }).is({ shift }),
+            ShiftTrading._requestsForShift({ shift }).is({ request, requester: user, status }),
+            is.among(status, ["OPEN", "CLAIMED"]),
+        )
+        .then(ShiftTrading.withdraw({ request })),
+);
 
 // --- formers ---
 
@@ -90,14 +112,15 @@ const Accept = endpoint(
     { input: { required: ["session", "invite"] } },
 );
 
+// also says who the owner is, so the page can mark their row and not offer to change or remove them
 const ClassRoster = endpoint(
     "/classes/roster",
-    ({ session, group, user }) =>
+    ({ session, group, user, owner }) =>
         receive({ session, group })
             .then(Sessioning.current({ session }).responds({ user }))
             .then(
-                where(IsMember({ user, group }))
-                    .then(respond({ roster: Roster({ group }) }))
+                where(IsMember({ user, group }), RoleBasedAccessing._group({ group }).is({ owner }))
+                    .then(respond({ roster: Roster({ group }), owner }))
                     .named("member"),
                 where(no(IsMember({ user, group })))
                     .then(respond({ error: "NOT_ALLOWED" }))
@@ -106,7 +129,57 @@ const ClassRoster = endpoint(
     { input: { required: ["session", "group"] } },
 );
 
+// --- managing members (STAFF), and leaving (anyone but the owner) ---
+
+// RoleBasedAccessing itself refuses changing the owner's role or a non-member's
+const ChangeRole = endpoint(
+    "/classes/change-role",
+    ({ session, group, member, role, user }) =>
+        receive({ session, group, member, role })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(MayManageMembers({ user, group }))
+                    .then(RoleBasedAccessing.changeRole({ group, user: member, role }).responds({}))
+                    .then(respond({ member }))
+                    .named("allowed"),
+                where(no(MayManageMembers({ user, group }))).then(respond({ error: "NOT_ALLOWED" })).named("not-allowed"),
+            ),
+    { input: { required: ["session", "group", "member", "role"] }, validators: { input: changeRoleInput } },
+);
+
+// RoleBasedAccessing itself refuses removing the owner or a non-member
+const RemoveMember = endpoint(
+    "/classes/remove",
+    ({ session, group, member, user }) =>
+        receive({ session, group, member })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(MayManageMembers({ user, group }))
+                    .then(RoleBasedAccessing.removeMember({ group, user: member }).responds({}))
+                    .then(respond({ member }))
+                    .named("allowed"),
+                where(no(MayManageMembers({ user, group }))).then(respond({ error: "NOT_ALLOWED" })).named("not-allowed"),
+            ),
+    { input: { required: ["session", "group", "member"] }, validators: { input: idsInput("group", "member") } },
+);
+
+// anyone can remove themselves; the owner is refused by RoleBasedAccessing
+const Leave = endpoint(
+    "/classes/leave",
+    ({ session, group, user }) =>
+        receive({ session, group })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(RoleBasedAccessing.removeMember({ group, user }).responds({}))
+            .then(respond({ group })),
+    { input: { required: ["session", "group"] }, validators: { input: idsInput("group") } },
+);
+
 export const composition = {
+    RemoveFromSchedule,
+    WithdrawCoverRequests,
+    ChangeRole,
+    RemoveMember,
+    Leave,
     MyClasses,
     MyInvites,
     Roster,

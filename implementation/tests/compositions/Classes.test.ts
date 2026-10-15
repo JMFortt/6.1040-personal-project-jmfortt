@@ -137,3 +137,91 @@ describe("Inviting and rostering", () => {
         expect(await post("/classes/roster", { session: outsider, group })).toEqual({ error: "FORBIDDEN" });
     });
 });
+
+describe("Managing members and leaving", () => {
+    // registers a user and returns their session and id
+    async function register(username: string) {
+        const { user, session } = await post("/auth/register", { username, password: "hunter2" });
+        return { user: user as string, session: session as string };
+    }
+
+    // a class with a STAFF owner and one LA
+    async function classWithLA(prefix: string) {
+        const owner = await register(`${prefix}-owner`);
+        const la = await register(`${prefix}-la`);
+        const { group } = await post("/classes/create", { session: owner.session, name: `${prefix} class` });
+        const { invite } = await post("/classes/invite", { session: owner.session, group, username: `${prefix}-la`, role: "LA" });
+        await post("/invites/accept", { session: la.session, invite });
+        return { group: group as string, owner, la };
+    }
+
+    const roleOf = async (session: string, group: string) =>
+        (await post("/classes/mine", { session })).classes.find((c: { group: string }) => c.group === group)?.role;
+
+    test("the roster says who the owner is", async () => {
+        const { group, owner, la } = await classWithLA("owner");
+        expect((await post("/classes/roster", { session: la.session, group })).owner).toBe(owner.user);
+    });
+
+    test("staff can change roles, and the new role's permissions apply", async () => {
+        const { group, owner, la } = await classWithLA("role");
+        const SLOT = { group, weekday: "MONDAY", startMinute: 900, endMinute: 1020, capacity: 1 };
+        expect(await post("/schedule/slots/create", { session: la.session, ...SLOT })).toEqual({ error: "FORBIDDEN" });
+
+        expect(await post("/classes/change-role", { session: owner.session, group, member: la.user, role: "TA" })).toEqual({
+            member: la.user,
+        });
+        expect(await roleOf(la.session, group)).toBe("TA");
+        expect(await post("/schedule/slots/create", { session: la.session, ...SLOT })).toEqual({ slot: expect.any(String) });
+    });
+
+    test("staff can remove members, and anyone but the owner can leave", async () => {
+        const { group, owner, la } = await classWithLA("remove");
+        expect(await post("/classes/remove", { session: owner.session, group, member: la.user })).toEqual({ member: la.user });
+        expect(await post("/classes/mine", { session: la.session })).toEqual({ classes: [] });
+
+        const { group: other, la: leaver } = await classWithLA("leave");
+        expect(await post("/classes/leave", { session: leaver.session, group: other })).toEqual({ group: other });
+        expect(await roleOf(leaver.session, other)).toBeUndefined();
+    });
+
+    test("the owner can't be changed, removed, or leave, and LAs can't manage members", async () => {
+        const { group, owner, la } = await classWithLA("guard");
+        const FORBIDDEN = { error: "FORBIDDEN" };
+        expect(await post("/classes/change-role", { session: owner.session, group, member: owner.user, role: "LA" })).toEqual(FORBIDDEN);
+        expect(await post("/classes/remove", { session: owner.session, group, member: owner.user })).toEqual(FORBIDDEN);
+        expect(await post("/classes/leave", { session: owner.session, group })).toEqual(FORBIDDEN);
+
+        expect(await post("/classes/change-role", { session: la.session, group, member: la.user, role: "STAFF" })).toEqual(FORBIDDEN);
+        expect(await post("/classes/remove", { session: la.session, group, member: owner.user })).toEqual(FORBIDDEN);
+        expect(await post("/classes/change-role", { session: owner.session, group, member: la.user, role: "BOSS" })).toEqual({
+            error: "INVALID_REQUEST",
+        });
+    });
+
+    test("leaving takes you off the template and future shifts, keeps past shifts, and withdraws your requests", async () => {
+        const { group, owner, la } = await classWithLA("cleanup");
+        const { slot } = await post("/schedule/slots/create", {
+            session: owner.session,
+            group,
+            weekday: "MONDAY",
+            startMinute: 900,
+            endMinute: 1020,
+            capacity: 1,
+        });
+        await post("/schedule/slots/assign", { session: owner.session, slot, member: la.user });
+        // one week long past, one far in the future
+        const { week: past } = await post("/schedule/weeks/publish", { session: owner.session, group, start: "2020-01-06T00:00:00.000Z", name: "Past" });
+        const { week: future } = await post("/schedule/weeks/publish", { session: owner.session, group, start: "2099-01-05T00:00:00.000Z", name: "Future" });
+        const shiftIn = async (week: string) => (await post("/schedule/week", { session: owner.session, week })).week.shifts[0];
+        const { request } = await post("/covers/request", { session: la.session, shift: (await shiftIn(future)).shift });
+
+        await post("/classes/leave", { session: la.session, group });
+
+        expect((await post("/schedule/template", { session: owner.session, group })).template[0].assignees).toEqual([]);
+        expect((await shiftIn(future)).assignees).toEqual([]);
+        expect((await shiftIn(past)).assignees.map((a: { user: string }) => a.user)).toEqual([la.user]);
+        const covers = await post("/covers/week", { session: owner.session, week: future });
+        expect(covers.requests.find((r: { request: string }) => r.request === request).status).toBe("WITHDRAWN");
+    });
+});

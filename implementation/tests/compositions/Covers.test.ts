@@ -86,6 +86,17 @@ describe("Covers", () => {
         expect(await post("/covers/approve", { session: ta.session, request })).toEqual({ error: "CONFLICT" });
     });
 
+    test("approval is refused if the claimer has left the class", async () => {
+        const { group, week, shift, ta, la1, la2 } = await classWithShift("left");
+        const { request } = await post("/covers/request", { session: la1.session, shift });
+        await post("/covers/claim", { session: la2.session, request });
+        await post("/classes/leave", { session: la2.session, group });
+
+        expect(await post("/covers/approve", { session: ta.session, request })).toEqual({ error: "CONFLICT" });
+        const { week: view } = await post("/schedule/week", { session: ta.session, week });
+        expect(view.shifts[0].assignees.map((a: { user: string }) => a.user)).toEqual([la1.user]);
+    });
+
     test("who may request, claim, approve, deny, and withdraw", async () => {
         const { shift, ta, la1, la2 } = await classWithShift("perm");
 

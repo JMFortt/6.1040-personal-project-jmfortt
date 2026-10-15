@@ -90,9 +90,10 @@ const Claim = endpoint(
     { input: { required: ["session", "request"] }, validators: { input: idsInput("request") } },
 );
 
-// TAs and staff approve, but only if the reassignment will actually work: the requester is still
-// on the shift and the claimer still isn't. Without this check, approve could succeed while the
-// reaction's reassign fails, leaving the request APPROVED but the schedule unchanged.
+// TAs and staff approve, but only if the reassignment will actually work and makes sense: the
+// requester is still on the shift, the claimer still isn't, and the claimer is still in the class.
+// Without this check, approve could succeed while the reaction's reassign fails, leaving the
+// request APPROVED but the schedule unchanged.
 const Approve = endpoint(
     "/covers/approve",
     ({ session, request, user, shift, group, requester, claimer }) =>
@@ -105,6 +106,7 @@ const Approve = endpoint(
                     MayApproveRequests({ user, group }),
                     ShiftScheduling._assignees({ shift }).is({ user: requester }),
                     no(ShiftScheduling._assignees({ shift }).is({ user: claimer })),
+                    IsMember({ user: claimer, group }),
                 )
                     .then(ShiftTrading.approve({ request }).responds({}))
                     .then(respond({ request }))
@@ -137,6 +139,17 @@ const Approve = endpoint(
                 )
                     .then(respond({ error: "CANNOT_APPLY" }))
                     .named("claimer-already-on"),
+                // the claimer has left the class (or nobody has claimed it yet)
+                where(
+                    ShiftTrading._request({ request }).is({ shift, requester, claimer }),
+                    ShiftScheduling._shift({ shift }).is({ context: group }),
+                    MayApproveRequests({ user, group }),
+                    ShiftScheduling._assignees({ shift }).is({ user: requester }),
+                    no(ShiftScheduling._assignees({ shift }).is({ user: claimer })),
+                    no(IsMember({ user: claimer, group })),
+                )
+                    .then(respond({ error: "CANNOT_APPLY" }))
+                    .named("claimer-not-member"),
             ),
     { input: { required: ["session", "request"] }, validators: { input: idsInput("request") } },
 );

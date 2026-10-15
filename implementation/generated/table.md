@@ -122,6 +122,7 @@ Defined in [ShiftScheduling](../design/concepts/ShiftScheduling.md), line 1.
   - Refuses `SHIFT_NOT_FOUND`: There is no such shift.
   - Refuses `NOT_ASSIGNED`: That user is not assigned to this shift.
   - Refuses `ALREADY_ASSIGNED`: That user is already assigned to this shift.
+- `removeFromSchedule(context: Context, user: User, from: DateTime) : returns ()`
 
 #### Queries
 
@@ -365,7 +366,7 @@ Former "the classes of (user)" — inputs (user); bindings (group, name, role); 
 ### the cover requests in (week)
 
 Authored path: `Covers.WeekRequests`.
-- Covered by [Covers](../design/compositions/Covers.md), line 43.
+- Covered by [Covers](../design/compositions/Covers.md), line 44.
 
 ```former
 Former "the cover requests in (week)" — inputs (week); bindings (shift, start, end, request, requester, claimer, status); promises exactly one record — forms:
@@ -925,6 +926,62 @@ then
   RequestBoundary.respond (invite, requestId)
 ```
 
+### Classes.ChangeRole
+
+Authored path: `Classes.ChangeRole`.
+- Covered by [Classes](../design/compositions/Classes.md), line 47.
+- Covered by [Classes](../design/compositions/Classes.md), line 53.
+
+```reaction
+when RequestBoundary.request (group, member, path: "/classes/change-role", requestId, role, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.ChangeRole:allowed#2
+
+Authored path: `Classes.ChangeRole`.
+- Covered by [Classes](../design/compositions/Classes.md), line 47.
+- Covered by [Classes](../design/compositions/Classes.md), line 53.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.ChangeRole
+where
+  earlier, RequestBoundary.request (group, member, path: "/classes/change-role", requestId, role, session)
+  view "(user) may manage the members of (group)" with (group, user)
+then
+  RoleBasedAccessing.changeRole (group, role, user: member)
+```
+
+### Classes.ChangeRole:allowed#3
+
+Authored path: `Classes.ChangeRole`.
+- Covered by [Classes](../design/compositions/Classes.md), line 47.
+- Covered by [Classes](../design/compositions/Classes.md), line 53.
+
+```reaction
+when RoleBasedAccessing.changeRole (group, role, user: member), asked by Classes.ChangeRole:allowed#2
+where
+  earlier, RequestBoundary.request (group, member, path: "/classes/change-role", requestId, role, session)
+then
+  RequestBoundary.respond (member, requestId)
+```
+
+### Classes.ChangeRole:not-allowed#2
+
+Authored path: `Classes.ChangeRole`.
+- Covered by [Classes](../design/compositions/Classes.md), line 47.
+- Covered by [Classes](../design/compositions/Classes.md), line 53.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.ChangeRole
+where
+  earlier, RequestBoundary.request (group, member, path: "/classes/change-role", requestId, role, session)
+  no view "(user) may manage the members of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
 ### Classes.ClassRoster
 
 Authored path: `Classes.ClassRoster`.
@@ -948,8 +1005,9 @@ when Sessioning.current (session, user), asked by Classes.ClassRoster
 where
   earlier, RequestBoundary.request (group, path: "/classes/roster", requestId, session)
   view "(user) is a member of (group)" with (group, user)
+  RoleBasedAccessing._group (group) has (owner)
 then
-  RequestBoundary.respond (requestId, roster: former "the roster of (group)" with (group))
+  RequestBoundary.respond (owner, requestId, roster: former "the roster of (group)" with (group))
 ```
 
 ### Classes.ClassRoster:not-member#2
@@ -1080,6 +1138,46 @@ then
   RequestBoundary.respond (error: "NO_SUCH_USER", requestId)
 ```
 
+### Classes.Leave
+
+Authored path: `Classes.Leave`.
+- Covered by [Classes](../design/compositions/Classes.md), line 49.
+- Covered by [Classes](../design/compositions/Classes.md), line 55.
+
+```reaction
+when RequestBoundary.request (group, path: "/classes/leave", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.Leave#2
+
+Authored path: `Classes.Leave`.
+- Covered by [Classes](../design/compositions/Classes.md), line 49.
+- Covered by [Classes](../design/compositions/Classes.md), line 55.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Leave
+where
+  earlier, RequestBoundary.request (group, path: "/classes/leave", requestId, session)
+then
+  RoleBasedAccessing.removeMember (group, user)
+```
+
+### Classes.Leave#3
+
+Authored path: `Classes.Leave`.
+- Covered by [Classes](../design/compositions/Classes.md), line 49.
+- Covered by [Classes](../design/compositions/Classes.md), line 55.
+
+```reaction
+when RoleBasedAccessing.removeMember (group, user), asked by Classes.Leave#2
+where
+  earlier, RequestBoundary.request (group, path: "/classes/leave", requestId, session)
+then
+  RequestBoundary.respond (group, requestId)
+```
+
 ### Classes.Mine
 
 Authored path: `Classes.Mine`.
@@ -1132,6 +1230,91 @@ then
   RequestBoundary.respond (invites: former "the invites of (user)" with (user), requestId)
 ```
 
+### Classes.RemoveFromSchedule
+
+Authored path: `Classes.RemoveFromSchedule`.
+- Covered by [Classes](../design/compositions/Classes.md), line 59.
+
+```reaction
+when RoleBasedAccessing.removeMember (group, user)
+where
+  instant is the current flow's instant
+then
+  ShiftScheduling.removeFromSchedule (context: group, from: instant, user)
+```
+
+### Classes.RemoveMember
+
+Authored path: `Classes.RemoveMember`.
+- Covered by [Classes](../design/compositions/Classes.md), line 48.
+- Covered by [Classes](../design/compositions/Classes.md), line 54.
+
+```reaction
+when RequestBoundary.request (group, member, path: "/classes/remove", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.RemoveMember:allowed#2
+
+Authored path: `Classes.RemoveMember`.
+- Covered by [Classes](../design/compositions/Classes.md), line 48.
+- Covered by [Classes](../design/compositions/Classes.md), line 54.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.RemoveMember
+where
+  earlier, RequestBoundary.request (group, member, path: "/classes/remove", requestId, session)
+  view "(user) may manage the members of (group)" with (group, user)
+then
+  RoleBasedAccessing.removeMember (group, user: member)
+```
+
+### Classes.RemoveMember:allowed#3
+
+Authored path: `Classes.RemoveMember`.
+- Covered by [Classes](../design/compositions/Classes.md), line 48.
+- Covered by [Classes](../design/compositions/Classes.md), line 54.
+
+```reaction
+when RoleBasedAccessing.removeMember (group, user: member), asked by Classes.RemoveMember:allowed#2
+where
+  earlier, RequestBoundary.request (group, member, path: "/classes/remove", requestId, session)
+then
+  RequestBoundary.respond (member, requestId)
+```
+
+### Classes.RemoveMember:not-allowed#2
+
+Authored path: `Classes.RemoveMember`.
+- Covered by [Classes](../design/compositions/Classes.md), line 48.
+- Covered by [Classes](../design/compositions/Classes.md), line 54.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.RemoveMember
+where
+  earlier, RequestBoundary.request (group, member, path: "/classes/remove", requestId, session)
+  no view "(user) may manage the members of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Classes.WithdrawCoverRequests
+
+Authored path: `Classes.WithdrawCoverRequests`.
+- Covered by [Classes](../design/compositions/Classes.md), line 62.
+
+```reaction
+when RoleBasedAccessing.removeMember (group, user)
+where
+  ShiftScheduling._weeks (context: group) has (week)
+  ShiftScheduling._shiftsInWeek (week) has (shift)
+  ShiftTrading._requestsForShift (shift) has (request, requester: user, status)
+  status is among ["OPEN", "CLAIMED"]
+then
+  ShiftTrading.withdraw (request)
+```
+
 ### Covers.ApplyCover
 
 Authored path: `Covers.ApplyCover`.
@@ -1149,7 +1332,7 @@ then
 
 Authored path: `Covers.Approve`.
 - Covered by [Covers](../design/compositions/Covers.md), line 28.
-- Covered by [Covers](../design/compositions/Covers.md), line 36.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
 
 ```reaction
 when RequestBoundary.request (path: "/covers/approve", request, requestId, session)
@@ -1161,7 +1344,7 @@ then
 
 Authored path: `Covers.Approve`.
 - Covered by [Covers](../design/compositions/Covers.md), line 28.
-- Covered by [Covers](../design/compositions/Covers.md), line 36.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Approve
@@ -1172,6 +1355,7 @@ where
   view "(user) may approve cover requests in (group)" with (group, user)
   ShiftScheduling._assignees (shift) has (user: requester)
   no ShiftScheduling._assignees (shift) has (user: claimer)
+  view "(user) is a member of (group)" with (group, user: claimer)
 then
   ShiftTrading.approve (request)
 ```
@@ -1180,7 +1364,7 @@ then
 
 Authored path: `Covers.Approve`.
 - Covered by [Covers](../design/compositions/Covers.md), line 28.
-- Covered by [Covers](../design/compositions/Covers.md), line 36.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
 
 ```reaction
 when ShiftTrading.approve (request), asked by Covers.Approve:allowed#2
@@ -1194,7 +1378,7 @@ then
 
 Authored path: `Covers.Approve`.
 - Covered by [Covers](../design/compositions/Covers.md), line 28.
-- Covered by [Covers](../design/compositions/Covers.md), line 36.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Approve
@@ -1209,11 +1393,31 @@ then
   RequestBoundary.respond (error: "CANNOT_APPLY", requestId)
 ```
 
+### Covers.Approve:claimer-not-member#2
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Approve
+where
+  earlier, RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+  ShiftTrading._request (request) has (claimer, requester, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may approve cover requests in (group)" with (group, user)
+  ShiftScheduling._assignees (shift) has (user: requester)
+  no ShiftScheduling._assignees (shift) has (user: claimer)
+  no view "(user) is a member of (group)" with (group, user: claimer)
+then
+  RequestBoundary.respond (error: "CANNOT_APPLY", requestId)
+```
+
 ### Covers.Approve:no-request#2
 
 Authored path: `Covers.Approve`.
 - Covered by [Covers](../design/compositions/Covers.md), line 28.
-- Covered by [Covers](../design/compositions/Covers.md), line 36.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Approve
@@ -1228,7 +1432,7 @@ then
 
 Authored path: `Covers.Approve`.
 - Covered by [Covers](../design/compositions/Covers.md), line 28.
-- Covered by [Covers](../design/compositions/Covers.md), line 36.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Approve
@@ -1244,7 +1448,7 @@ then
 
 Authored path: `Covers.Approve`.
 - Covered by [Covers](../design/compositions/Covers.md), line 28.
-- Covered by [Covers](../design/compositions/Covers.md), line 36.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Approve
@@ -1261,7 +1465,7 @@ then
 
 Authored path: `Covers.Approve`.
 - Covered by [Covers](../design/compositions/Covers.md), line 28.
-- Covered by [Covers](../design/compositions/Covers.md), line 36.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Approve
@@ -1389,7 +1593,7 @@ then
 
 Authored path: `Covers.Deny`.
 - Covered by [Covers](../design/compositions/Covers.md), line 29.
-- Covered by [Covers](../design/compositions/Covers.md), line 37.
+- Covered by [Covers](../design/compositions/Covers.md), line 38.
 
 ```reaction
 when RequestBoundary.request (path: "/covers/deny", request, requestId, session)
@@ -1401,7 +1605,7 @@ then
 
 Authored path: `Covers.Deny`.
 - Covered by [Covers](../design/compositions/Covers.md), line 29.
-- Covered by [Covers](../design/compositions/Covers.md), line 37.
+- Covered by [Covers](../design/compositions/Covers.md), line 38.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Deny
@@ -1418,7 +1622,7 @@ then
 
 Authored path: `Covers.Deny`.
 - Covered by [Covers](../design/compositions/Covers.md), line 29.
-- Covered by [Covers](../design/compositions/Covers.md), line 37.
+- Covered by [Covers](../design/compositions/Covers.md), line 38.
 
 ```reaction
 when ShiftTrading.deny (request), asked by Covers.Deny:allowed#2
@@ -1432,7 +1636,7 @@ then
 
 Authored path: `Covers.Deny`.
 - Covered by [Covers](../design/compositions/Covers.md), line 29.
-- Covered by [Covers](../design/compositions/Covers.md), line 37.
+- Covered by [Covers](../design/compositions/Covers.md), line 38.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Deny
@@ -1447,7 +1651,7 @@ then
 
 Authored path: `Covers.Deny`.
 - Covered by [Covers](../design/compositions/Covers.md), line 29.
-- Covered by [Covers](../design/compositions/Covers.md), line 37.
+- Covered by [Covers](../design/compositions/Covers.md), line 38.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Deny
@@ -1463,7 +1667,7 @@ then
 
 Authored path: `Covers.Deny`.
 - Covered by [Covers](../design/compositions/Covers.md), line 29.
-- Covered by [Covers](../design/compositions/Covers.md), line 37.
+- Covered by [Covers](../design/compositions/Covers.md), line 38.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.Deny
@@ -1479,8 +1683,8 @@ then
 ### Covers.ForWeek
 
 Authored path: `Covers.ForWeek`.
-- Covered by [Covers](../design/compositions/Covers.md), line 42.
-- Covered by [Covers](../design/compositions/Covers.md), line 46.
+- Covered by [Covers](../design/compositions/Covers.md), line 43.
+- Covered by [Covers](../design/compositions/Covers.md), line 47.
 
 ```reaction
 when RequestBoundary.request (path: "/covers/week", requestId, session, week)
@@ -1491,8 +1695,8 @@ then
 ### Covers.ForWeek:member#2
 
 Authored path: `Covers.ForWeek`.
-- Covered by [Covers](../design/compositions/Covers.md), line 42.
-- Covered by [Covers](../design/compositions/Covers.md), line 46.
+- Covered by [Covers](../design/compositions/Covers.md), line 43.
+- Covered by [Covers](../design/compositions/Covers.md), line 47.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.ForWeek
@@ -1507,8 +1711,8 @@ then
 ### Covers.ForWeek:no-week#2
 
 Authored path: `Covers.ForWeek`.
-- Covered by [Covers](../design/compositions/Covers.md), line 42.
-- Covered by [Covers](../design/compositions/Covers.md), line 46.
+- Covered by [Covers](../design/compositions/Covers.md), line 43.
+- Covered by [Covers](../design/compositions/Covers.md), line 47.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.ForWeek
@@ -1522,8 +1726,8 @@ then
 ### Covers.ForWeek:not-member#2
 
 Authored path: `Covers.ForWeek`.
-- Covered by [Covers](../design/compositions/Covers.md), line 42.
-- Covered by [Covers](../design/compositions/Covers.md), line 46.
+- Covered by [Covers](../design/compositions/Covers.md), line 43.
+- Covered by [Covers](../design/compositions/Covers.md), line 47.
 
 ```reaction
 when Sessioning.current (session, user), asked by Covers.ForWeek
@@ -2662,9 +2866,12 @@ not listed here have no explicit input contract.
 - `/auth/login` — requires `username`, `password`
 - `/auth/logout` — requires `session`
 - `/auth/register` — requires `username`, `password`
+- `/classes/change-role` — requires `session`, `group`, `member`, `role`
 - `/classes/create` — requires `session`, `name`
 - `/classes/invite` — requires `session`, `group`, `username`, `role`
+- `/classes/leave` — requires `session`, `group`
 - `/classes/mine` — requires `session`
+- `/classes/remove` — requires `session`, `group`, `member`
 - `/classes/roster` — requires `session`, `group`
 - `/covers/approve` — requires `session`, `request`
 - `/covers/claim` — requires `session`, `request`

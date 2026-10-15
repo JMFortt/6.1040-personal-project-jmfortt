@@ -71,6 +71,15 @@ export function idsInput(...keys: string[]) {
     return validator((value) => strings(value, ["session", ...keys]), `${keys.join(" and ")} must be given`);
 }
 
+export const changeRoleInput = validator(
+    (value) =>
+        typeof value.session === "string" &&
+        typeof value.group === "string" &&
+        typeof value.member === "string" &&
+        ROLES.includes(value.role as string),
+    "the role must be LA, TA, or STAFF",
+);
+
 export const createClassInput = validator(
     (value) => typeof value.session === "string" && nonemptyString(value.name),
     "the class name must not be empty",

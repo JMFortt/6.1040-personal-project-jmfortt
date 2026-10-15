@@ -186,6 +186,12 @@ reassign(shift: Shift, from: User, to: User) : returns ()
   where shift exists, from is assigned to shift, and to is also assigned
   then
     refuses ALREADY_ASSIGNED "That user is already assigned to this shift."
+
+removeFromSchedule(context: Context, user: User, from: DateTime) : returns ()
+  where true
+  then
+    remove user from the assignees of every slot in context, and of every shift in context that starts at or after from
+    returns
 ```
 
 ## Queries

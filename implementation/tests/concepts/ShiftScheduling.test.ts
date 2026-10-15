@@ -235,6 +235,27 @@ describe("ShiftScheduling", () => {
         expect(await scheduling._assignees({ shift })).toHaveLength(1);
     });
 
+    test("removing someone from a schedule takes them off the template and later shifts, but not earlier ones", async () => {
+        const slot = await mondaySlot(2);
+        await scheduling.assignSlot({ slot, user: "ari" });
+        await scheduling.assignSlot({ slot, user: "bea" });
+        const { week } = await scheduling.publishWeek({ context: "6.123", start: WEEK, name: "Week" });
+        const { week: next } = await scheduling.publishWeek({ context: "6.123", start: NEXT_WEEK, name: "Week" });
+        const [past] = await scheduling._shiftsInWeek({ week });
+        const [future] = await scheduling._shiftsInWeek({ week: next });
+        // another class's schedule isn't touched
+        const { slot: other } = await scheduling.createSlot({ context: "other", weekday: "MONDAY", startMinute: 0, endMinute: 60, capacity: 1 });
+        await scheduling.assignSlot({ slot: other, user: "ari" });
+
+        // "now" is between the two weeks
+        await scheduling.removeFromSchedule({ context: "6.123", user: "ari", from: "2026-10-22T00:00:00.000Z" });
+
+        expect(await scheduling._slotAssignees({ slot })).toEqual([{ user: "bea" }]);
+        expect(await scheduling._assignees({ shift: future!.shift })).toEqual([{ user: "bea" }]);
+        expect(await scheduling._assignees({ shift: past!.shift })).toEqual([{ user: "ari" }, { user: "bea" }]);
+        expect(await scheduling._slotAssignees({ slot: other })).toEqual([{ user: "ari" }]);
+    });
+
     test("reassigning is refused for a missing shift, if from isn't on it, or if to already is", async () => {
         await expect(scheduling.reassign({ shift: "nope", from: "ari", to: "bea" })).rejects.toThrow(ShiftNotFound);
         await mondaySlot(2);

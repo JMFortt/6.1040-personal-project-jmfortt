@@ -240,6 +240,17 @@ export class ShiftSchedulingConcept {
         throw new AlreadyAssigned("That user is already assigned to this shift.");
     }
 
+    // takes user off the template and off every shift from `from` on, but leaves earlier shifts
+    // alone so attendance history still makes sense (e.g. when someone leaves a class)
+    async removeFromSchedule({ context, user, from }: { context: string; user: string; from: string | Date }) {
+        await this.slots.updateMany({ context, assignees: user }, { $pull: { assignees: user } });
+        await this.shifts.updateMany(
+            { context, assignees: user, start: { $gte: new Date(from) } },
+            { $pull: { assignees: user } },
+        );
+        return {};
+    }
+
     // --- queries ---
 
     async _slots({ context }: { context: string }) {

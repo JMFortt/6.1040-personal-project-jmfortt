@@ -115,6 +115,18 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "INVALID_CREDENTIALS" | "INVALID_INPUT" | "USERNAME_TAKEN" };
   };
+  "/classes/change-role": {
+    input: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["changeRole"]>[0], ["group"]>>;
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["changeRole"]>[0], ["user"]>>;
+      "role": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["changeRole"]>[0], ["role"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["changeRole"]>[0], ["user"]>>;
+    };
+    error: { error: AppWideError | "CANNOT_CHANGE_OWNER_ROLE" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_A_MEMBER" | "NOT_LOGGED_IN" };
+  };
   "/classes/create": {
     input: {
       "name": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["createGroup"]>[0], ["name"]>>;
@@ -137,6 +149,16 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "ALREADY_IN_GROUP" | "GROUP_NOT_FOUND" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_USER" };
   };
+  "/classes/leave": {
+    input: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["group"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["group"]>>;
+    };
+    error: { error: AppWideError | "ALREADY_RESOLVED" | "CANNOT_REMOVE_OWNER" | "INVALID_INPUT" | "NOT_A_MEMBER" | "NOT_LOGGED_IN" | "REQUEST_NOT_FOUND" };
+  };
   "/classes/mine": {
     input: {
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
@@ -150,12 +172,24 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "INVALID_INPUT" | "NOT_LOGGED_IN" };
   };
-  "/classes/roster": {
+  "/classes/remove": {
     input: {
-      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_members"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["group"]>>;
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["user"]>>;
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
     };
     output: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["user"]>>;
+    };
+    error: { error: AppWideError | "ALREADY_RESOLVED" | "CANNOT_REMOVE_OWNER" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_A_MEMBER" | "NOT_LOGGED_IN" | "REQUEST_NOT_FOUND" };
+  };
+  "/classes/roster": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_group"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_members"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "owner": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_group"]>>>, ["owner"]>>;
       "roster": {
         "role": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_members"]>>>, ["role"]>>;
         "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_members"]>>>, ["user"]>]>>;
@@ -544,6 +578,18 @@ export type TAbleWireHttp = {
     };
     error: { error: HttpAppWideError | "CONFLICT" | "INVALID_REQUEST" };
   };
+  "/classes/change-role": {
+    input: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["changeRole"]>[0], ["group"]>>;
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["changeRole"]>[0], ["user"]>>;
+      "role": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["changeRole"]>[0], ["role"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["changeRole"]>[0], ["user"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
   "/classes/create": {
     input: {
       "name": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["createGroup"]>[0], ["name"]>>;
@@ -566,6 +612,16 @@ export type TAbleWireHttp = {
     };
     error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
   };
+  "/classes/leave": {
+    input: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["group"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["group"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
   "/classes/mine": {
     input: {
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
@@ -579,12 +635,24 @@ export type TAbleWireHttp = {
     };
     error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
   };
-  "/classes/roster": {
+  "/classes/remove": {
     input: {
-      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_members"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["group"]>>;
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["user"]>>;
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
     };
     output: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["user"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/classes/roster": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_group"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_members"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "owner": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_group"]>>>, ["owner"]>>;
       "roster": {
         "role": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_members"]>>>, ["role"]>>;
         "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_members"]>>>, ["user"]>]>>;

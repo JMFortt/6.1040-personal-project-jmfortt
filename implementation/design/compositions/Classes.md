@@ -34,9 +34,29 @@ Classes.Accept at /invites/accept
 
 A user who [is a member of a class](view:Access.IsMember), in any role, can
 [see its roster](reaction:Classes.ClassRoster), shown as
-[each member's username and role](former:Classes.Roster). Anyone else is refused
-as not allowed.
+[each member's username and role](former:Classes.Roster), along with who the owner
+is. Anyone else is refused as not allowed.
 
 ```endpoints
 Classes.ClassRoster at /classes/roster
 ```
+
+## Managing members and leaving
+
+A user who may manage a class's members can
+[change a member's role](reaction:Classes.ChangeRole) to LA, TA, or STAFF and
+[remove a member](reaction:Classes.RemoveMember). Anyone can
+[leave a class themselves](reaction:Classes.Leave). The owner's role cannot be
+changed, and the owner cannot be removed or leave.
+
+```endpoints
+Classes.ChangeRole at /classes/change-role
+Classes.RemoveMember at /classes/remove
+Classes.Leave at /classes/leave
+```
+
+When someone leaves or is removed, they
+[come off the class's schedule from now on](reaction:Classes.RemoveFromSchedule):
+off every template slot and every shift that has not started yet, while shifts
+already started or past keep them so attendance history stays intact. Any of their
+[cover requests in the class that are still active are withdrawn](reaction:Classes.WithdrawCoverRequests).

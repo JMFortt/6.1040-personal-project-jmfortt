@@ -38,13 +38,16 @@ export const WeekPage = defineComponent({
     },
     emits: ["back", "logged-out"],
     setup(props, { emit }) {
-        const canEdit = computed(() => props.role === "TA" || props.role === "STAFF");
-        const isLA = computed(() => props.role === "LA");
 
         const name = ref("");
         const start = ref("");
         const shifts = ref<ShiftRow[]>([]);
-        const roster = ref<Person[]>([]);
+        const roster = ref<(Person & { role: string })[]>([]);
+        // your role right now, from your own row of the latest roster (it may have changed since the
+        // class was opened); until the roster loads, the role the class was opened with
+        const myRole = computed(() => roster.value.find((m) => m.user === props.me)?.role ?? props.role);
+        const canEdit = computed(() => myRole.value === "TA" || myRole.value === "STAFF");
+        const isLA = computed(() => myRole.value === "LA");
         const covers = ref<CoverRow[]>([]);
         const loading = ref(true);
         const loadError = ref("");

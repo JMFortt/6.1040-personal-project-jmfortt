@@ -27,10 +27,11 @@ Covers.Withdraw at /covers/withdraw
 A user who [may approve cover requests](view:Access.MayApproveRequests) in the
 shift's class can [approve a claimed request](reaction:Covers.Approve) or
 [deny an active one](reaction:Covers.Deny). Because there are no multi-action
-transactions, approval first checks that the reassignment will succeed, meaning
-the requester is still on the shift and the claimer still is not. If the schedule
-has changed since the claim, approval is refused and the request stays claimed,
-so a request is never approved without the schedule changing to match.
+transactions, approval first checks that the reassignment will succeed and makes
+sense, meaning the requester is still on the shift, the claimer still is not, and
+the claimer is still a member of the class. If any of that has changed since the
+claim, approval is refused and the request stays claimed, so a request is never
+approved without the schedule changing to match.
 
 ```endpoints
 Covers.Approve at /covers/approve

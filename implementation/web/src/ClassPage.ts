@@ -47,10 +47,13 @@ export const ClassPage = defineComponent({
     },
     emits: ["back", "logged-out", "open-week"],
     setup(props, { emit }) {
-        const canEdit = computed(() => props.role === "TA" || props.role === "STAFF");
-        const isLA = computed(() => props.role === "LA");
-
         const roster = ref<MemberRow[]>([]);
+        // your role right now, from your own row of the latest roster (it may have changed since the
+        // class was opened); until the roster loads, the role the class was opened with
+        const myRole = computed(() => roster.value.find((m) => m.user === props.me)?.role ?? props.role);
+        const canEdit = computed(() => myRole.value === "TA" || myRole.value === "STAFF");
+        const isLA = computed(() => myRole.value === "LA");
+        const owner = ref("");
         const slots = ref<SlotRow[]>([]);
         const weeks = ref<WeekRow[]>([]);
         const myAttendance = ref<MyAttendanceRow[]>([]);
@@ -85,7 +88,10 @@ export const ClassPage = defineComponent({
                         return;
                     }
                 }
-                if (!("error" in rosterResult)) roster.value = rosterResult.roster;
+                if (!("error" in rosterResult)) {
+                    roster.value = rosterResult.roster;
+                    owner.value = rosterResult.owner;
+                }
                 if (!("error" in templateResult)) slots.value = templateResult.template;
                 if (!("error" in weeksResult)) weeks.value = weeksResult.weeks;
                 if (!("error" in attendanceResult)) myAttendance.value = attendanceResult.records;
@@ -162,6 +168,52 @@ export const ClassPage = defineComponent({
             }
         }
 
+        // --- managing members (STAFF) and leaving (anyone but the owner) ---
+
+        const memberError = ref("");
+        const memberBusy = ref(false);
+
+        async function changeRole(member: string, role: string) {
+            const ok = await perform(
+                (session) => client.classes["change-role"]({ session, group: props.group, member, role }),
+                {
+                    FORBIDDEN: "Only staff can change roles, and the owner's role can't be changed.",
+                    NOT_FOUND: "They're no longer in this class.",
+                    INVALID_REQUEST: "The role must be LA, TA, or STAFF.",
+                },
+                memberError,
+                memberBusy,
+            );
+            // reload either way, so the dropdown shows what's actually saved
+            await load();
+            return ok;
+        }
+
+        async function removeMember(member: string, username: string) {
+            if (!confirm(`Remove ${username} from this class? They'll come off any upcoming shifts.`)) return;
+            const ok = await perform(
+                (session) => client.classes.remove({ session, group: props.group, member }),
+                {
+                    FORBIDDEN: "Only staff can remove members, and the owner can't be removed.",
+                    NOT_FOUND: "They're no longer in this class.",
+                },
+                memberError,
+                memberBusy,
+            );
+            if (ok) await load();
+        }
+
+        async function leave() {
+            if (!confirm("Leave this class? You'll come off any upcoming shifts.")) return;
+            const ok = await perform(
+                (session) => client.classes.leave({ session, group: props.group }),
+                { FORBIDDEN: "The owner can't leave the class.", NOT_FOUND: "You're no longer in this class." },
+                memberError,
+                memberBusy,
+            );
+            if (ok) emit("back");
+        }
+
         // --- inviting (STAFF) ---
 
         const inviteUsername = ref("");
@@ -200,6 +252,7 @@ export const ClassPage = defineComponent({
         onMounted(load);
 
         return {
+            myRole, owner, memberError, memberBusy, changeRole, removeMember, leave,
             isLA, myAttendance, hoursLabel,
             canEdit, roster, weeks, loading, loadError, load,
             blocks, scheduleError, scheduleBusy, assignSlot, unassignSlot, deleteSlot, addSlot,
@@ -213,7 +266,7 @@ export const ClassPage = defineComponent({
             <button :disabled="loading" @click="load">Refresh</button>
         </div>
         <h2>{{ name }}</h2>
-        <p>You are: {{ role }}</p>
+        <p>You are: {{ myRole }}</p>
         <p v-if="loading">Loading…</p>
         <p v-else-if="loadError" class="error">{{ loadError }}</p>
 
@@ -264,10 +317,27 @@ export const ClassPage = defineComponent({
 
             <h3>Roster</h3>
             <ul>
-                <li v-for="m in roster" :key="m.user">{{ m.username }} — {{ m.role }}</li>
+                <li v-for="m in roster" :key="m.user">
+                    {{ m.username }} —
+                    <template v-if="myRole === 'STAFF' && m.user !== owner">
+                        <select :value="m.role" :disabled="memberBusy" @change="changeRole(m.user, $event.target.value)">
+                            <option>LA</option>
+                            <option>TA</option>
+                            <option>STAFF</option>
+                        </select>
+                        <button class="link" :disabled="memberBusy" @click="removeMember(m.user, m.username)">Remove</button>
+                    </template>
+                    <template v-else>
+                        {{ m.role }}<span v-if="m.user === owner"> (owner)</span>
+                    </template>
+                </li>
             </ul>
+            <p v-if="memberError" class="error">{{ memberError }}</p>
+            <div v-if="owner !== '' && me !== owner" class="buttons">
+                <button :disabled="memberBusy" @click="leave">Leave class</button>
+            </div>
 
-            <template v-if="role === 'STAFF'">
+            <template v-if="myRole === 'STAFF'">
                 <h3>Invite someone</h3>
                 <form @submit.prevent="invite">
                     <label>
