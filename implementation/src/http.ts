@@ -24,6 +24,7 @@ export const policy = httpPolicy({
         ALREADY_ASSIGNED: "CONFLICT",
         SHIFT_FULL: "CONFLICT",
         NOT_ASSIGNED: "NOT_FOUND",
+        NO_RECORD: "NOT_FOUND",
         // app-level refusals from the compositions
         NOT_ALLOWED: "FORBIDDEN",
         NO_SUCH_USER: "NOT_FOUND",
@@ -31,5 +32,6 @@ export const policy = httpPolicy({
         NO_SUCH_WEEK: "NOT_FOUND",
         NO_SUCH_SHIFT: "NOT_FOUND",
         NOT_IN_CLASS: "INVALID_REQUEST",
+        NOT_ON_SHIFT: "INVALID_REQUEST",
     },
 });

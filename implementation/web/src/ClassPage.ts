@@ -1,7 +1,7 @@
 import { computed, defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, errorMessage, loggedOutBy, makePerform, savedSession, saveSession, SCHEDULE_MESSAGES, SESSION_EXPIRED, UNREACHABLE } from "./api.ts";
 import { ScheduleBoard, type Block, type Person } from "./ScheduleBoard.ts";
-import { dateLabel, mondayOf, WEEKDAYS } from "./time.ts";
+import { dateLabel, mondayOf, WEEKDAYS, type Weekday } from "./time.ts";
 
 export interface ClassRow {
     group: string;
@@ -15,7 +15,7 @@ interface MemberRow extends Person {
 
 interface SlotRow {
     slot: string;
-    weekday: string;
+    weekday: Weekday;
     startMinute: number;
     endMinute: number;
     capacity: number;

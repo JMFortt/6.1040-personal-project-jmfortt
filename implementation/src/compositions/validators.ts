@@ -61,6 +61,11 @@ export const renameInput = validator(
     "the week's name must not be empty",
 );
 
+export const markInput = validator(
+    (value) => strings(value, ["session", "shift", "member"]) && ["PRESENT", "ABSENT", "LATE"].includes(value.status as string),
+    "the status must be PRESENT, ABSENT, or LATE",
+);
+
 // for endpoints that take a session plus some ids, like { session, shift, member }
 export function idsInput(...keys: string[]) {
     return validator((value) => strings(value, ["session", ...keys]), `${keys.join(" and ")} must be given`);

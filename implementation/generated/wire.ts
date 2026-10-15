@@ -14,6 +14,64 @@ export type Json = null | boolean | number | string | Json[] | { [key: string]: 
 export type AppWideError = never;
 
 export type TAbleWire = {
+  "/attendance/mark": {
+    input: {
+      "member": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["event"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+      "status": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["status"]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["event"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NOT_ON_SHIFT" | "NO_SUCH_SHIFT" };
+  };
+  "/attendance/mine": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "records": ({
+        "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+        "shift": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>[0], ["event"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>[0], ["shift"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>>>, ["status"]>> | null;
+      })[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
+  };
+  "/attendance/shift": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>>;
+    };
+    output: {
+      "records": {
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_recordsForEvent"]>>>, ["status"]>>;
+        "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_recordsForEvent"]>>>, ["user"]>]>>;
+        "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+      }[];
+    } | {
+      "records": {
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>>>, ["status"]>>;
+        "user": Jsonify<AllOf<[AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>>, ["user"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>[0], ["user"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["user"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>]>>;
+        "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+      }[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_SHIFT" };
+  };
+  "/attendance/unmark": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["unmark"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["unmark"]>[0], ["event"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["unmark"]>[0], ["event"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_RECORD" | "NO_SUCH_SHIFT" };
+  };
   "/auth/current": {
     input: {
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
@@ -317,6 +375,64 @@ export type TAbleWire = {
 export type HttpAppWideError = never;
 
 export type TAbleWireHttp = {
+  "/attendance/mark": {
+    input: {
+      "member": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["event"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+      "status": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["status"]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["event"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/attendance/mine": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "records": ({
+        "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+        "shift": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>[0], ["event"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>[0], ["shift"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>>>, ["status"]>> | null;
+      })[];
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/attendance/shift": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>>;
+    };
+    output: {
+      "records": {
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_recordsForEvent"]>>>, ["status"]>>;
+        "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_recordsForEvent"]>>>, ["user"]>]>>;
+        "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+      }[];
+    } | {
+      "records": {
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>>>, ["status"]>>;
+        "user": Jsonify<AllOf<[AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>>, ["user"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>[0], ["user"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["user"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>]>>;
+        "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+      }[];
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/attendance/unmark": {
+    input: {
+      "member": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["unmark"]>[0], ["user"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["unmark"]>[0], ["event"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["unmark"]>[0], ["event"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
   "/auth/current": {
     input: {
       "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;

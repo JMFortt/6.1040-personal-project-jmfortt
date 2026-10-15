@@ -1,4 +1,6 @@
 import { conceptSet, registerConcept } from "@mit-sdg/sync-engine/assembly";
+import attendanceTrackingSpec from "@design/concepts/AttendanceTracking.md" with { type: "text" };
+import { AttendanceTrackingConcept, NoRecord } from "./concepts/AttendanceTracking.ts";
 import roleBasedAccessingSpec from "@design/concepts/RoleBasedAccessing.md" with { type: "text" };
 import sessioningSpec from "@design/concepts/Sessioning.md" with { type: "text" };
 import shiftSchedulingSpec from "@design/concepts/ShiftScheduling.md" with { type: "text" };
@@ -79,10 +81,17 @@ const shiftScheduling = registerConcept({
     },
 });
 
+const attendanceTracking = registerConcept({
+    class: AttendanceTrackingConcept,
+    spec: attendanceTrackingSpec,
+    refusals: { NO_RECORD: NoRecord },
+});
+
 export const applicationConceptSet = conceptSet({
     UserAuthenticating: userAuthenticating,
     Sessioning: sessioning,
     RoleBasedAccessing: roleBasedAccessing,
     ShiftScheduling: shiftScheduling,
+    AttendanceTracking: attendanceTracking,
 });
 export const { concepts } = applicationConceptSet;

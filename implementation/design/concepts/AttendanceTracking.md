@@ -38,6 +38,15 @@ mark(user: User, event: Event, status: Status) : returns ()
   then
     set user's record for event to status (creating it if needed)
     returns
+
+unmark(user: User, event: Event) : returns ()
+  where user has a record for event
+  then
+    remove user's record for event
+    returns
+  where user has no record for event
+  then
+    refuses NO_RECORD "There is no attendance record to clear."
 ```
 
 ## Queries

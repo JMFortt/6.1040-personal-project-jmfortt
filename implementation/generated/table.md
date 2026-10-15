@@ -8,6 +8,28 @@ _specifications and composition source, then regenerate this file._
 
 ## Concepts
 
+### AttendanceTracking
+
+Defined in [AttendanceTracking](../design/concepts/AttendanceTracking.md), line 1.
+
+#### Actions
+
+- `mark(user: User, event: Event, status: Status) : returns ()`
+- `unmark(user: User, event: Event) : returns ()`
+  - Refuses `NO_RECORD`: There is no attendance record to clear.
+
+#### Queries
+
+- `_record(user: User, event: Event) : optional (status: Status)`
+- `_recordsForUser(user: User) : many (event: Event, status: Status)`
+- `_recordsForEvent(event: Event) : many (user: User, status: Status)`
+
+#### Instances
+
+- `AttendanceTracking` — instance of `AttendanceTracking` — [Application types](../design/types.md), line 28.
+  - `Event` is `ShiftScheduling.Shift` — [Application types](../design/types.md), line 30.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 29.
+
 ### RoleBasedAccessing
 
 Defined in [RoleBasedAccessing](../design/concepts/RoleBasedAccessing.md), line 1.
@@ -38,9 +60,9 @@ Defined in [RoleBasedAccessing](../design/concepts/RoleBasedAccessing.md), line 
 
 #### Instances
 
-- `RoleBasedAccessing` — instance of `RoleBasedAccessing` — [Application types](../design/types.md), line 19.
-  - `Role` is `StaffRole` — [Application types](../design/types.md), line 21.
-  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 20.
+- `RoleBasedAccessing` — instance of `RoleBasedAccessing` — [Application types](../design/types.md), line 20.
+  - `Role` is `StaffRole` — [Application types](../design/types.md), line 22.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 21.
 
 ### Sessioning
 
@@ -56,8 +78,8 @@ Defined in [Sessioning](../design/concepts/Sessioning.md), line 1.
 
 #### Instances
 
-- `Sessioning` — instance of `Sessioning` — [Application types](../design/types.md), line 16.
-  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 17.
+- `Sessioning` — instance of `Sessioning` — [Application types](../design/types.md), line 17.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 18.
 
 ### ShiftScheduling
 
@@ -114,9 +136,9 @@ Defined in [ShiftScheduling](../design/concepts/ShiftScheduling.md), line 1.
 
 #### Instances
 
-- `ShiftScheduling` — instance of `ShiftScheduling` — [Application types](../design/types.md), line 23.
-  - `Context` is `RoleBasedAccessing.Group` — [Application types](../design/types.md), line 25.
-  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 24.
+- `ShiftScheduling` — instance of `ShiftScheduling` — [Application types](../design/types.md), line 24.
+  - `Context` is `RoleBasedAccessing.Group` — [Application types](../design/types.md), line 26.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 25.
 
 ### UserAuthenticating
 
@@ -137,13 +159,13 @@ Defined in [UserAuthenticating](../design/concepts/UserAuthenticating.md), line 
 
 #### Instances
 
-- `UserAuthenticating` — instance of `UserAuthenticating` — [Application types](../design/types.md), line 14.
+- `UserAuthenticating` — instance of `UserAuthenticating` — [Application types](../design/types.md), line 15.
 
 ## Application types
 
 Concrete types:
 
-- `StaffRole` — [Application types](../design/types.md), line 9.
+- `StaffRole` — [Application types](../design/types.md), line 10.
 
 ## Views
 
@@ -153,6 +175,7 @@ _Views name reusable conditions. Multiple `where` blocks are alternatives._
 
 Authored path: `Access.IsMember`.
 - Covered by [Access](../design/compositions/Access.md), line 13.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 19.
 - Covered by [Classes](../design/compositions/Classes.md), line 35.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 9.
 
@@ -177,12 +200,38 @@ Authored path: `Access.MayEditSchedule`.
 ### (user) may manage the members of (group)
 
 Authored path: `Access.MayManageMembers`.
-- Covered by [Access](../design/compositions/Access.md), line 15.
+- Covered by [Access](../design/compositions/Access.md), line 17.
 - Covered by [Classes](../design/compositions/Classes.md), line 17.
 
 ```view
 (user) may manage the members of (group) — inputs (user, group); outputs (); bindings ()
   where RoleBasedAccessing._role (group, user) has (role: "STAFF")
+```
+
+### (user) may mark attendance in (group)
+
+Authored path: `Access.MayMarkAttendance`.
+- Covered by [Access](../design/compositions/Access.md), line 15.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 6.
+
+```view
+(user) may mark attendance in (group) — inputs (user, group); outputs (); bindings (role)
+  where
+    RoleBasedAccessing._role (group, user) has (role)
+    role is among ["TA", "STAFF"]
+```
+
+### (user) may view everyone's attendance in (group)
+
+Authored path: `Access.MayViewAllAttendance`.
+- Covered by [Access](../design/compositions/Access.md), line 16.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 17.
+
+```view
+(user) may view everyone's attendance in (group) — inputs (user, group); outputs (); bindings (role)
+  where
+    RoleBasedAccessing._role (group, user) has (role)
+    role is among ["TA", "STAFF"]
 ```
 
 ## Formers
@@ -201,6 +250,55 @@ Former "the account of (user)" — inputs (user); bindings (username); promises 
     where UserAuthenticating._username (user) has (username)
     user
     username
+```
+
+### the attendance of (user) in (group)
+
+Authored path: `Attendance.MyRecords`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 27.
+
+```former
+Former "the attendance of (user) in (group)" — inputs (user, group); bindings (week, shift, start, end, status); promises exactly one record — forms:
+  each ShiftScheduling._weeks (context: group) has (week)
+    where ShiftScheduling._shiftsInWeek (week) has (end, shift, start)
+    where ShiftScheduling._assignees (shift) has (user)
+    where whether AttendanceTracking._record (event: shift, user) has (status)
+    arranged by start
+    form a record of
+      end
+      shift
+      start
+      status
+```
+
+### the attendance record of (user) for (shift)
+
+Authored path: `Attendance.OwnShiftRecord`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 20.
+
+```former
+Former "the attendance record of (user) for (shift)" — inputs (user, shift); bindings (username, status); promises exactly one record — forms:
+  each AttendanceTracking._record (event: shift, user) has (status)
+    where UserAuthenticating._username (user) has (username)
+    form a record of
+      status
+      user
+      username
+```
+
+### the attendance records of (shift)
+
+Authored path: `Attendance.ShiftRecords`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 18.
+
+```former
+Former "the attendance records of (shift)" — inputs (shift); bindings (member, username, status); promises exactly one record — forms:
+  each AttendanceTracking._recordsForEvent (event: shift) has (status, user: member)
+    where UserAuthenticating._username (user: member) has (username)
+    form a record of
+      status
+      user: member
+      username
 ```
 
 ### the classes of (user)
@@ -309,6 +407,288 @@ Former "the weekly template of (group)" — inputs (group); bindings (slot, week
 ```
 
 ## Reactions
+
+### Attendance.ForShift
+
+Authored path: `Attendance.ForShift`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 16.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 23.
+
+```reaction
+when RequestBoundary.request (path: "/attendance/shift", requestId, session, shift)
+then
+  Sessioning.current (session)
+```
+
+### Attendance.ForShift:everyone#2
+
+Authored path: `Attendance.ForShift`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 16.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.ForShift
+where
+  earlier, RequestBoundary.request (path: "/attendance/shift", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may view everyone's attendance in (group)" with (group, user)
+then
+  RequestBoundary.respond (records: former "the attendance records of (shift)" with (shift), requestId)
+```
+
+### Attendance.ForShift:no-shift#2
+
+Authored path: `Attendance.ForShift`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 16.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.ForShift
+where
+  earlier, RequestBoundary.request (path: "/attendance/shift", requestId, session, shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Attendance.ForShift:not-member#2
+
+Authored path: `Attendance.ForShift`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 16.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.ForShift
+where
+  earlier, RequestBoundary.request (path: "/attendance/shift", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Attendance.ForShift:own#2
+
+Authored path: `Attendance.ForShift`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 16.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 23.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.ForShift
+where
+  earlier, RequestBoundary.request (path: "/attendance/shift", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) is a member of (group)" with (group, user)
+  no view "(user) may view everyone's attendance in (group)" with (group, user)
+then
+  RequestBoundary.respond (records: former "the attendance record of (user) for (shift)" with (shift, user), requestId)
+```
+
+### Attendance.Mark
+
+Authored path: `Attendance.Mark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 7.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 12.
+
+```reaction
+when RequestBoundary.request (member, path: "/attendance/mark", requestId, session, shift, status)
+then
+  Sessioning.current (session)
+```
+
+### Attendance.Mark:allowed#2
+
+Authored path: `Attendance.Mark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 7.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 12.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Mark
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/mark", requestId, session, shift, status)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may mark attendance in (group)" with (group, user)
+  ShiftScheduling._assignees (shift) has (user: member)
+then
+  AttendanceTracking.mark (event: shift, status, user: member)
+```
+
+### Attendance.Mark:allowed#3
+
+Authored path: `Attendance.Mark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 7.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 12.
+
+```reaction
+when AttendanceTracking.mark (event: shift, status, user: member), asked by Attendance.Mark:allowed#2
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/mark", requestId, session, shift, status)
+then
+  RequestBoundary.respond (requestId, shift)
+```
+
+### Attendance.Mark:no-shift#2
+
+Authored path: `Attendance.Mark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 7.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 12.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Mark
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/mark", requestId, session, shift, status)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Attendance.Mark:not-allowed#2
+
+Authored path: `Attendance.Mark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 7.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 12.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Mark
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/mark", requestId, session, shift, status)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) may mark attendance in (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Attendance.Mark:not-on-shift#2
+
+Authored path: `Attendance.Mark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 7.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 12.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Mark
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/mark", requestId, session, shift, status)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may mark attendance in (group)" with (group, user)
+  no ShiftScheduling._assignees (shift) has (user: member)
+then
+  RequestBoundary.respond (error: "NOT_ON_SHIFT", requestId)
+```
+
+### Attendance.Mine
+
+Authored path: `Attendance.Mine`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 26.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 31.
+
+```reaction
+when RequestBoundary.request (group, path: "/attendance/mine", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Attendance.Mine:member#2
+
+Authored path: `Attendance.Mine`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 26.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 31.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Mine
+where
+  earlier, RequestBoundary.request (group, path: "/attendance/mine", requestId, session)
+  view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (records: former "the attendance of (user) in (group)" with (group, user), requestId)
+```
+
+### Attendance.Mine:not-member#2
+
+Authored path: `Attendance.Mine`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 26.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 31.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Mine
+where
+  earlier, RequestBoundary.request (group, path: "/attendance/mine", requestId, session)
+  no view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Attendance.Unmark
+
+Authored path: `Attendance.Unmark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 8.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 13.
+
+```reaction
+when RequestBoundary.request (member, path: "/attendance/unmark", requestId, session, shift)
+then
+  Sessioning.current (session)
+```
+
+### Attendance.Unmark:allowed#2
+
+Authored path: `Attendance.Unmark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 8.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 13.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Unmark
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/unmark", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may mark attendance in (group)" with (group, user)
+then
+  AttendanceTracking.unmark (event: shift, user: member)
+```
+
+### Attendance.Unmark:allowed#3
+
+Authored path: `Attendance.Unmark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 8.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 13.
+
+```reaction
+when AttendanceTracking.unmark (event: shift, user: member), asked by Attendance.Unmark:allowed#2
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/unmark", requestId, session, shift)
+then
+  RequestBoundary.respond (requestId, shift)
+```
+
+### Attendance.Unmark:no-shift#2
+
+Authored path: `Attendance.Unmark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 8.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 13.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Unmark
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/unmark", requestId, session, shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Attendance.Unmark:not-allowed#2
+
+Authored path: `Attendance.Unmark`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 8.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 13.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.Unmark
+where
+  earlier, RequestBoundary.request (member, path: "/attendance/unmark", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) may mark attendance in (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
 
 ### Auth.Current
 
@@ -1660,6 +2040,10 @@ object or lacks a required key. The response uses `INVALID_INPUT` and names
 the path or missing key. A declared default fills an absent key. Endpoints
 not listed here have no explicit input contract.
 
+- `/attendance/mark` — requires `session`, `shift`, `member`, `status`
+- `/attendance/mine` — requires `session`, `group`
+- `/attendance/shift` — requires `session`, `shift`
+- `/attendance/unmark` — requires `session`, `shift`, `member`
 - `/auth/current` — requires `session`
 - `/auth/login` — requires `username`, `password`
 - `/auth/logout` — requires `session`
