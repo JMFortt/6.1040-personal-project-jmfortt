@@ -43,6 +43,11 @@ export const MayApproveRequests = view("(user) may approve cover requests in (gr
     ),
 ).holds();
 
+// only the class's creator can delete it
+export const IsOwner = view("(user) owns (group)", ({ user, group }, _outputs, _bindings) =>
+    where(RoleBasedAccessing._group({ group }).is({ owner: user })),
+).holds();
+
 // only staff invite people
 export const MayManageMembers = view("(user) may manage the members of (group)", ({ user, group }, _outputs, _bindings) =>
     where(RoleBasedAccessing._role({ group, user }).is({ role: "STAFF" })),
@@ -55,4 +60,5 @@ export const composition = {
     MayViewAllAttendance,
     MayApproveRequests,
     MayManageMembers,
+    IsOwner,
 };

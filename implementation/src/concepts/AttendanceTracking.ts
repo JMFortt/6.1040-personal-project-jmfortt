@@ -46,6 +46,12 @@ export class AttendanceTrackingConcept {
         return {};
     }
 
+    // e.g. when the event itself is deleted
+    async clearEvent({ event }: { event: string }) {
+        await this.records.deleteMany({ event });
+        return {};
+    }
+
     async _record({ user, event }: { user: string; event: string }) {
         const found = await this.records.findOne({ user, event });
         return found === null ? [] : [{ status: found.status }];

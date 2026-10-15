@@ -7,6 +7,7 @@ import { composition as auth } from "./compositions/Auth.ts";
 import { composition as covers } from "./compositions/Covers.ts";
 import { ShiftTradingConcept } from "./concepts/ShiftTrading.ts";
 import { composition as classes } from "./compositions/Classes.ts";
+import { composition as cleanup } from "./compositions/Cleanup.ts";
 import { composition as schedule } from "./compositions/Schedule.ts";
 import { RoleBasedAccessingConcept } from "./concepts/RoleBasedAccessing.ts";
 import { SessioningConcept } from "./concepts/Sessioning.ts";
@@ -32,6 +33,7 @@ export function assembleApplication(database: Db = db) {
       Attendance: attendance,
       Auth: auth,
       Classes: classes,
+      Cleanup: cleanup,
       Covers: covers,
       Schedule: schedule,
     },

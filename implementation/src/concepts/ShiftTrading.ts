@@ -95,6 +95,12 @@ export class ShiftTradingConcept {
         throw new AlreadyResolved("This request has already been resolved.");
     }
 
+    // e.g. when the shift itself is deleted
+    async clearShift({ shift }: { shift: string }) {
+        await this.requests.deleteMany({ shift });
+        return {};
+    }
+
     async _request({ request }: { request: string }) {
         const found = await this.requests.findOne({ _id: request });
         if (found === null) return [];

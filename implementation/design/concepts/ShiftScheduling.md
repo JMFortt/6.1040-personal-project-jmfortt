@@ -115,7 +115,7 @@ renameWeek(week: Week, name: String) : returns ()
 deleteWeek(week: Week) : returns ()
   where week exists
   then
-    remove week and every shift in it
+    remove week, leaving its shifts to be deleted one by one so that whatever depends on each shift can be cleaned up with it
     returns
   where week does not exist
   then

@@ -176,10 +176,12 @@ export class ShiftSchedulingConcept {
         return {};
     }
 
+    // only the week itself: its shifts stay until each is deleted, so the app can clean up what
+    // depends on each shift (attendance, cover requests) as it goes. Every query reaches shifts
+    // through their week, so they're invisible in the meantime.
     async deleteWeek({ week }: { week: string }) {
-        if ((await this.weeks.findOne({ _id: week })) === null) throw new WeekNotFound("There is no such week.");
-        await this.shifts.deleteMany({ week });
-        await this.weeks.deleteOne({ _id: week });
+        const result = await this.weeks.deleteOne({ _id: week });
+        if (result.deletedCount === 0) throw new WeekNotFound("There is no such week.");
         return {};
     }
 

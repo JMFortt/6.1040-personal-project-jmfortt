@@ -17,3 +17,4 @@ them see it and request or claim covers. A TA or STAFF member
 [may view everyone's attendance](view:Access.MayViewAllAttendance), and
 [may approve cover requests](view:Access.MayApproveRequests).
 Only a STAFF member [may manage its members](view:Access.MayManageMembers).
+Only the user who [owns the class](view:Access.IsOwner), its creator, may delete it.

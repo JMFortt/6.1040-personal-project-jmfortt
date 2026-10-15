@@ -41,6 +41,17 @@ is. Anyone else is refused as not allowed.
 Classes.ClassRoster at /classes/roster
 ```
 
+## Deleting a class
+
+Only the user who [owns the class](view:Access.IsOwner) can
+[delete it](reaction:Classes.Delete), which removes it with its memberships and
+invites; its schedule, attendance, and cover requests are then removed by the
+cleanup reactions in the same flow. Anyone else is refused as not allowed.
+
+```endpoints
+Classes.Delete at /classes/delete
+```
+
 ## Managing members and leaving
 
 A user who may manage a class's members can

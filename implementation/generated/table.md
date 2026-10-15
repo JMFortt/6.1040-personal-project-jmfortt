@@ -17,6 +17,7 @@ Defined in [AttendanceTracking](../design/concepts/AttendanceTracking.md), line 
 - `mark(user: User, event: Event, status: Status) : returns ()`
 - `unmark(user: User, event: Event) : returns ()`
   - Refuses `NO_RECORD`: There is no attendance record to clear.
+- `clearEvent(event: Event) : returns ()`
 
 #### Queries
 
@@ -46,6 +47,8 @@ Defined in [RoleBasedAccessing](../design/concepts/RoleBasedAccessing.md), line 
 - `changeRole(group: Group, user: User, role: Role) : returns ()`
   - Refuses `NOT_A_MEMBER`: That user is not a member of this group.
   - Refuses `CANNOT_CHANGE_OWNER_ROLE`: The owner's role cannot be changed.
+- `deleteGroup(group: Group) : returns ()`
+  - Refuses `GROUP_NOT_FOUND`: There is no such group.
 - `removeMember(group: Group, user: User) : returns ()`
   - Refuses `NOT_A_MEMBER`: That user is not a member of this group.
   - Refuses `CANNOT_REMOVE_OWNER`: The owner cannot be removed from the group.
@@ -162,6 +165,7 @@ Defined in [ShiftTrading](../design/concepts/ShiftTrading.md), line 1.
 - `withdraw(request: Request) : returns ()`
   - Refuses `REQUEST_NOT_FOUND`: There is no such request.
   - Refuses `ALREADY_RESOLVED`: This request has already been resolved.
+- `clearShift(shift: Shift) : returns ()`
 
 #### Queries
 
@@ -280,6 +284,17 @@ Authored path: `Access.MayViewAllAttendance`.
   where
     RoleBasedAccessing._role (group, user) has (role)
     role is among ["TA", "STAFF"]
+```
+
+### (user) owns (group)
+
+Authored path: `Access.IsOwner`.
+- Covered by [Access](../design/compositions/Access.md), line 20.
+- Covered by [Classes](../design/compositions/Classes.md), line 46.
+
+```view
+(user) owns (group) — inputs (user, group); outputs (); bindings ()
+  where RoleBasedAccessing._group (group) has (owner: user)
 ```
 
 ## Formers
@@ -929,8 +944,8 @@ then
 ### Classes.ChangeRole
 
 Authored path: `Classes.ChangeRole`.
-- Covered by [Classes](../design/compositions/Classes.md), line 47.
-- Covered by [Classes](../design/compositions/Classes.md), line 53.
+- Covered by [Classes](../design/compositions/Classes.md), line 58.
+- Covered by [Classes](../design/compositions/Classes.md), line 64.
 
 ```reaction
 when RequestBoundary.request (group, member, path: "/classes/change-role", requestId, role, session)
@@ -941,8 +956,8 @@ then
 ### Classes.ChangeRole:allowed#2
 
 Authored path: `Classes.ChangeRole`.
-- Covered by [Classes](../design/compositions/Classes.md), line 47.
-- Covered by [Classes](../design/compositions/Classes.md), line 53.
+- Covered by [Classes](../design/compositions/Classes.md), line 58.
+- Covered by [Classes](../design/compositions/Classes.md), line 64.
 
 ```reaction
 when Sessioning.current (session, user), asked by Classes.ChangeRole
@@ -956,8 +971,8 @@ then
 ### Classes.ChangeRole:allowed#3
 
 Authored path: `Classes.ChangeRole`.
-- Covered by [Classes](../design/compositions/Classes.md), line 47.
-- Covered by [Classes](../design/compositions/Classes.md), line 53.
+- Covered by [Classes](../design/compositions/Classes.md), line 58.
+- Covered by [Classes](../design/compositions/Classes.md), line 64.
 
 ```reaction
 when RoleBasedAccessing.changeRole (group, role, user: member), asked by Classes.ChangeRole:allowed#2
@@ -970,8 +985,8 @@ then
 ### Classes.ChangeRole:not-allowed#2
 
 Authored path: `Classes.ChangeRole`.
-- Covered by [Classes](../design/compositions/Classes.md), line 47.
-- Covered by [Classes](../design/compositions/Classes.md), line 53.
+- Covered by [Classes](../design/compositions/Classes.md), line 58.
+- Covered by [Classes](../design/compositions/Classes.md), line 64.
 
 ```reaction
 when Sessioning.current (session, user), asked by Classes.ChangeRole
@@ -1065,6 +1080,62 @@ then
   RequestBoundary.respond (group, requestId)
 ```
 
+### Classes.Delete
+
+Authored path: `Classes.Delete`.
+- Covered by [Classes](../design/compositions/Classes.md), line 47.
+- Covered by [Classes](../design/compositions/Classes.md), line 52.
+
+```reaction
+when RequestBoundary.request (group, path: "/classes/delete", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Classes.Delete:not-owner#2
+
+Authored path: `Classes.Delete`.
+- Covered by [Classes](../design/compositions/Classes.md), line 47.
+- Covered by [Classes](../design/compositions/Classes.md), line 52.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Delete
+where
+  earlier, RequestBoundary.request (group, path: "/classes/delete", requestId, session)
+  no view "(user) owns (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Classes.Delete:owner#2
+
+Authored path: `Classes.Delete`.
+- Covered by [Classes](../design/compositions/Classes.md), line 47.
+- Covered by [Classes](../design/compositions/Classes.md), line 52.
+
+```reaction
+when Sessioning.current (session, user), asked by Classes.Delete
+where
+  earlier, RequestBoundary.request (group, path: "/classes/delete", requestId, session)
+  view "(user) owns (group)" with (group, user)
+then
+  RoleBasedAccessing.deleteGroup (group)
+```
+
+### Classes.Delete:owner#3
+
+Authored path: `Classes.Delete`.
+- Covered by [Classes](../design/compositions/Classes.md), line 47.
+- Covered by [Classes](../design/compositions/Classes.md), line 52.
+
+```reaction
+when RoleBasedAccessing.deleteGroup (group), asked by Classes.Delete:owner#2
+where
+  earlier, RequestBoundary.request (group, path: "/classes/delete", requestId, session)
+then
+  RequestBoundary.respond (group, requestId)
+```
+
 ### Classes.Invite
 
 Authored path: `Classes.Invite`.
@@ -1141,8 +1212,8 @@ then
 ### Classes.Leave
 
 Authored path: `Classes.Leave`.
-- Covered by [Classes](../design/compositions/Classes.md), line 49.
-- Covered by [Classes](../design/compositions/Classes.md), line 55.
+- Covered by [Classes](../design/compositions/Classes.md), line 60.
+- Covered by [Classes](../design/compositions/Classes.md), line 66.
 
 ```reaction
 when RequestBoundary.request (group, path: "/classes/leave", requestId, session)
@@ -1153,8 +1224,8 @@ then
 ### Classes.Leave#2
 
 Authored path: `Classes.Leave`.
-- Covered by [Classes](../design/compositions/Classes.md), line 49.
-- Covered by [Classes](../design/compositions/Classes.md), line 55.
+- Covered by [Classes](../design/compositions/Classes.md), line 60.
+- Covered by [Classes](../design/compositions/Classes.md), line 66.
 
 ```reaction
 when Sessioning.current (session, user), asked by Classes.Leave
@@ -1167,8 +1238,8 @@ then
 ### Classes.Leave#3
 
 Authored path: `Classes.Leave`.
-- Covered by [Classes](../design/compositions/Classes.md), line 49.
-- Covered by [Classes](../design/compositions/Classes.md), line 55.
+- Covered by [Classes](../design/compositions/Classes.md), line 60.
+- Covered by [Classes](../design/compositions/Classes.md), line 66.
 
 ```reaction
 when RoleBasedAccessing.removeMember (group, user), asked by Classes.Leave#2
@@ -1233,7 +1304,7 @@ then
 ### Classes.RemoveFromSchedule
 
 Authored path: `Classes.RemoveFromSchedule`.
-- Covered by [Classes](../design/compositions/Classes.md), line 59.
+- Covered by [Classes](../design/compositions/Classes.md), line 70.
 
 ```reaction
 when RoleBasedAccessing.removeMember (group, user)
@@ -1246,8 +1317,8 @@ then
 ### Classes.RemoveMember
 
 Authored path: `Classes.RemoveMember`.
-- Covered by [Classes](../design/compositions/Classes.md), line 48.
-- Covered by [Classes](../design/compositions/Classes.md), line 54.
+- Covered by [Classes](../design/compositions/Classes.md), line 59.
+- Covered by [Classes](../design/compositions/Classes.md), line 65.
 
 ```reaction
 when RequestBoundary.request (group, member, path: "/classes/remove", requestId, session)
@@ -1258,8 +1329,8 @@ then
 ### Classes.RemoveMember:allowed#2
 
 Authored path: `Classes.RemoveMember`.
-- Covered by [Classes](../design/compositions/Classes.md), line 48.
-- Covered by [Classes](../design/compositions/Classes.md), line 54.
+- Covered by [Classes](../design/compositions/Classes.md), line 59.
+- Covered by [Classes](../design/compositions/Classes.md), line 65.
 
 ```reaction
 when Sessioning.current (session, user), asked by Classes.RemoveMember
@@ -1273,8 +1344,8 @@ then
 ### Classes.RemoveMember:allowed#3
 
 Authored path: `Classes.RemoveMember`.
-- Covered by [Classes](../design/compositions/Classes.md), line 48.
-- Covered by [Classes](../design/compositions/Classes.md), line 54.
+- Covered by [Classes](../design/compositions/Classes.md), line 59.
+- Covered by [Classes](../design/compositions/Classes.md), line 65.
 
 ```reaction
 when RoleBasedAccessing.removeMember (group, user: member), asked by Classes.RemoveMember:allowed#2
@@ -1287,8 +1358,8 @@ then
 ### Classes.RemoveMember:not-allowed#2
 
 Authored path: `Classes.RemoveMember`.
-- Covered by [Classes](../design/compositions/Classes.md), line 48.
-- Covered by [Classes](../design/compositions/Classes.md), line 54.
+- Covered by [Classes](../design/compositions/Classes.md), line 59.
+- Covered by [Classes](../design/compositions/Classes.md), line 65.
 
 ```reaction
 when Sessioning.current (session, user), asked by Classes.RemoveMember
@@ -1302,7 +1373,7 @@ then
 ### Classes.WithdrawCoverRequests
 
 Authored path: `Classes.WithdrawCoverRequests`.
-- Covered by [Classes](../design/compositions/Classes.md), line 62.
+- Covered by [Classes](../design/compositions/Classes.md), line 73.
 
 ```reaction
 when RoleBasedAccessing.removeMember (group, user)
@@ -1313,6 +1384,67 @@ where
   status is among ["OPEN", "CLAIMED"]
 then
   ShiftTrading.withdraw (request)
+```
+
+### Cleanup.ClearShiftAttendance
+
+Authored path: `Cleanup.ClearShiftAttendance`.
+- Covered by [Cleanup](../design/compositions/Cleanup.md), line 10.
+
+```reaction
+when ShiftScheduling.deleteShift (shift)
+then
+  AttendanceTracking.clearEvent (event: shift)
+```
+
+### Cleanup.ClearShiftRequests
+
+Authored path: `Cleanup.ClearShiftRequests`.
+- Covered by [Cleanup](../design/compositions/Cleanup.md), line 11.
+
+```reaction
+when ShiftScheduling.deleteShift (shift)
+then
+  ShiftTrading.clearShift (shift)
+```
+
+### Cleanup.DeleteClassSlots
+
+Authored path: `Cleanup.DeleteClassSlots`.
+- Covered by [Cleanup](../design/compositions/Cleanup.md), line 17.
+
+```reaction
+when RoleBasedAccessing.deleteGroup (group)
+where
+  ShiftScheduling._slots (context: group) has (slot)
+then
+  ShiftScheduling.deleteSlot (slot)
+```
+
+### Cleanup.DeleteClassWeeks
+
+Authored path: `Cleanup.DeleteClassWeeks`.
+- Covered by [Cleanup](../design/compositions/Cleanup.md), line 16.
+
+```reaction
+when RoleBasedAccessing.deleteGroup (group)
+where
+  ShiftScheduling._weeks (context: group) has (week)
+then
+  ShiftScheduling.deleteWeek (week)
+```
+
+### Cleanup.DeleteWeekShifts
+
+Authored path: `Cleanup.DeleteWeekShifts`.
+- Covered by [Cleanup](../design/compositions/Cleanup.md), line 13.
+
+```reaction
+when ShiftScheduling.deleteWeek (week)
+where
+  ShiftScheduling._shiftsInWeek (week) has (shift)
+then
+  ShiftScheduling.deleteShift (shift)
 ```
 
 ### Covers.ApplyCover
@@ -2868,6 +3000,7 @@ not listed here have no explicit input contract.
 - `/auth/register` — requires `username`, `password`
 - `/classes/change-role` — requires `session`, `group`, `member`, `role`
 - `/classes/create` — requires `session`, `name`
+- `/classes/delete` — requires `session`, `group`
 - `/classes/invite` — requires `session`, `group`, `username`, `role`
 - `/classes/leave` — requires `session`, `group`
 - `/classes/mine` — requires `session`

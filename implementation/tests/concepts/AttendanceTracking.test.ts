@@ -47,6 +47,18 @@ describe("AttendanceTracking", () => {
         );
     });
 
+    test("clearing an event removes all of its records and nothing else", async () => {
+        await attendance.mark({ user: "ari", event: "monday", status: "PRESENT" });
+        await attendance.mark({ user: "bea", event: "monday", status: "LATE" });
+        await attendance.mark({ user: "ari", event: "tuesday", status: "ABSENT" });
+
+        await attendance.clearEvent({ event: "monday" });
+        expect(await attendance._recordsForEvent({ event: "monday" })).toEqual([]);
+        expect(await attendance._recordsForUser({ user: "ari" })).toEqual([{ event: "tuesday", status: "ABSENT" }]);
+        // clearing an event with no records is fine
+        await attendance.clearEvent({ event: "monday" });
+    });
+
     test("records can be listed per user and per event", async () => {
         await attendance.mark({ user: "bea", event: "monday", status: "PRESENT" });
         await attendance.mark({ user: "ari", event: "monday", status: "LATE" });

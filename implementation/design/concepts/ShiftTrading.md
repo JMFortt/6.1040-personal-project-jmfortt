@@ -93,6 +93,12 @@ withdraw(request: Request) : returns ()
   where request exists and is not OPEN or CLAIMED
   then
     refuses ALREADY_RESOLVED "This request has already been resolved."
+
+clearShift(shift: Shift) : returns ()
+  where true
+  then
+    remove every request for shift
+    returns
 ```
 
 ## Queries

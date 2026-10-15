@@ -214,6 +214,17 @@ export const ClassPage = defineComponent({
             if (ok) emit("back");
         }
 
+        async function deleteClass() {
+            if (!confirm(`Delete ${props.name} and everything in it (schedule, attendance, cover requests)? This can't be undone.`)) return;
+            const ok = await perform(
+                (session) => client.classes.delete({ session, group: props.group }),
+                { FORBIDDEN: "Only the person who created this class can delete it." },
+                memberError,
+                memberBusy,
+            );
+            if (ok) emit("back");
+        }
+
         // --- inviting (STAFF) ---
 
         const inviteUsername = ref("");
@@ -252,7 +263,7 @@ export const ClassPage = defineComponent({
         onMounted(load);
 
         return {
-            myRole, owner, memberError, memberBusy, changeRole, removeMember, leave,
+            myRole, owner, memberError, memberBusy, changeRole, removeMember, leave, deleteClass,
             isLA, myAttendance, hoursLabel,
             canEdit, roster, weeks, loading, loadError, load,
             blocks, scheduleError, scheduleBusy, assignSlot, unassignSlot, deleteSlot, addSlot,
@@ -335,6 +346,9 @@ export const ClassPage = defineComponent({
             <p v-if="memberError" class="error">{{ memberError }}</p>
             <div v-if="owner !== '' && me !== owner" class="buttons">
                 <button :disabled="memberBusy" @click="leave">Leave class</button>
+            </div>
+            <div v-if="owner !== '' && me === owner" class="buttons">
+                <button :disabled="memberBusy" @click="deleteClass">Delete class</button>
             </div>
 
             <template v-if="myRole === 'STAFF'">

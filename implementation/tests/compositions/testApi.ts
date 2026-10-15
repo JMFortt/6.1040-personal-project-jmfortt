@@ -26,10 +26,17 @@ export async function testApi(databaseName: string) {
         return response.json();
     }
 
+    // a response can arrive before reactions it started have finished (like cleanup after a
+    // delete); this waits until all of that work is done
+    async function idle() {
+        await gateway.whenIdle();
+    }
+
     async function close() {
         await db.dropDatabase();
         await client.close();
     }
 
-    return { post, close };
+    // db is exposed so tests can check that deleted data is really gone
+    return { post, idle, db, close };
 }

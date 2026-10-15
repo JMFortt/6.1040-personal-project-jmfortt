@@ -47,6 +47,12 @@ unmark(user: User, event: Event) : returns ()
   where user has no record for event
   then
     refuses NO_RECORD "There is no attendance record to clear."
+
+clearEvent(event: Event) : returns ()
+  where true
+  then
+    remove every record for event
+    returns
 ```
 
 ## Queries

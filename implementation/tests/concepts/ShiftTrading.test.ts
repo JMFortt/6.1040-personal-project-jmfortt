@@ -80,6 +80,14 @@ describe("ShiftTrading", () => {
         await expect(trading.approve({ request })).rejects.toThrow(NotClaimed);
     });
 
+    test("clearing a shift removes all of its requests and nothing else", async () => {
+        await trading.requestCover({ requester: "ari", shift: "monday" });
+        const { request: other } = await trading.requestCover({ requester: "ari", shift: "tuesday" });
+        await trading.clearShift({ shift: "monday" });
+        expect(await trading._requestsForShift({ shift: "monday" })).toEqual([]);
+        expect(await trading._request({ request: other })).toHaveLength(1);
+    });
+
     test("an active request can be denied or withdrawn, but not once it's resolved", async () => {
         const { request: denied } = await trading.requestCover({ requester: "ari", shift: "monday" });
         await trading.claim({ request: denied, claimer: "bea" });

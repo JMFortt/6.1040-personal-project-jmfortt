@@ -79,6 +79,15 @@ changeRole(group: Group, user: User, role: Role) : returns ()
   then
     refuses CANNOT_CHANGE_OWNER_ROLE "The owner's role cannot be changed."
 
+deleteGroup(group: Group) : returns ()
+  where group exists
+  then
+    remove every membership in group, every invite to group, and then group
+    returns
+  where group does not exist
+  then
+    refuses GROUP_NOT_FOUND "There is no such group."
+
 removeMember(group: Group, user: User) : returns ()
   where user is a member of group and is not its owner
   then

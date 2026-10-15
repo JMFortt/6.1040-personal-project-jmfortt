@@ -82,6 +82,21 @@ describe("RoleBasedAccessing", () => {
         await expect(rba.accept({ invite, user: "ari" })).rejects.toThrow(InviteNotFound);
     });
 
+    test("deleting a group removes it with its memberships and invites", async () => {
+        const group = await newGroup();
+        const { invite } = await rba.invite({ group, user: "ari", role: "helper" });
+        await rba.accept({ invite, user: "ari" });
+        await rba.invite({ group, user: "bea", role: "helper" });
+        const other = await newGroup("other");
+
+        await rba.deleteGroup({ group });
+        expect(await rba._group({ group })).toEqual([]);
+        expect(await rba._members({ group })).toEqual([]);
+        expect(await rba._invitesForUser({ user: "bea" })).toEqual([]);
+        expect(await rba._groupsForUser({ user: "owner" })).toEqual([{ group: other, name: "other", role: "admin" }]);
+        await expect(rba.deleteGroup({ group })).rejects.toThrow(GroupNotFound);
+    });
+
     test("the owner's role can't be changed and the owner can't be removed", async () => {
         const group = await newGroup();
         await expect(rba.changeRole({ group, user: "owner", role: "helper" })).rejects.toThrow(CannotChangeOwnerRole);

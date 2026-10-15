@@ -1,7 +1,7 @@
 import { endpoint, receive, respond } from "@mit-sdg/sync-engine/boundary";
 import { each, former, is, no, now, reaction, when, where } from "@mit-sdg/sync-engine/language";
 import { concepts } from "../concepts.ts";
-import { IsMember, MayManageMembers } from "./Access.ts";
+import { IsMember, IsOwner, MayManageMembers } from "./Access.ts";
 import { changeRoleInput, createClassInput, idsInput, inviteInput } from "./validators.ts";
 
 const { Sessioning, UserAuthenticating, RoleBasedAccessing, ShiftScheduling, ShiftTrading } = concepts;
@@ -174,7 +174,25 @@ const Leave = endpoint(
     { input: { required: ["session", "group"] }, validators: { input: idsInput("group") } },
 );
 
+// only the owner can delete a class; the Cleanup reactions then delete its schedule, continuing
+// right after the response is sent
+const Delete = endpoint(
+    "/classes/delete",
+    ({ session, group, user }) =>
+        receive({ session, group })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(IsOwner({ user, group }))
+                    .then(RoleBasedAccessing.deleteGroup({ group }).responds({}))
+                    .then(respond({ group }))
+                    .named("owner"),
+                where(no(IsOwner({ user, group }))).then(respond({ error: "NOT_ALLOWED" })).named("not-owner"),
+            ),
+    { input: { required: ["session", "group"] }, validators: { input: idsInput("group") } },
+);
+
 export const composition = {
+    Delete,
     RemoveFromSchedule,
     WithdrawCoverRequests,
     ChangeRole,

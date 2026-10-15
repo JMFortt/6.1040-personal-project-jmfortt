@@ -137,6 +137,16 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "INVALID_INPUT" | "NOT_LOGGED_IN" };
   };
+  "/classes/delete": {
+    input: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["deleteGroup"]>[0], ["group"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["deleteGroup"]>[0], ["group"]>>;
+    };
+    error: { error: AppWideError | "GROUP_NOT_FOUND" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "SHIFT_NOT_FOUND" | "SLOT_NOT_FOUND" | "WEEK_NOT_FOUND" };
+  };
   "/classes/invite": {
     input: {
       "group": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["invite"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
@@ -447,7 +457,7 @@ export type TAbleWire = {
     output: {
       "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["deleteWeek"]>[0], ["week"]>>;
     };
-    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_WEEK" | "WEEK_NOT_FOUND" };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_WEEK" | "SHIFT_NOT_FOUND" | "WEEK_NOT_FOUND" };
   };
   "/schedule/weeks/publish": {
     input: {
@@ -599,6 +609,16 @@ export type TAbleWireHttp = {
       "group": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["createGroup"]>>, ["group"]>>;
     };
     error: { error: HttpAppWideError | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/classes/delete": {
+    input: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["deleteGroup"]>[0], ["group"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["deleteGroup"]>[0], ["group"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
   };
   "/classes/invite": {
     input: {

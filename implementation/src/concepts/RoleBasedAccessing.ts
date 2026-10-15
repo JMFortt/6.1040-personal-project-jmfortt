@@ -100,6 +100,18 @@ export class RoleBasedAccessingConcept {
         return {};
     }
 
+    // memberships and invites go first, so if this stops partway, what's left is a group nobody is
+    // in (which no one can see) rather than members of a group that doesn't exist
+    async deleteGroup({ group }: { group: string }) {
+        if ((await this.groups.findOne({ _id: group })) === null) {
+            throw new GroupNotFound("There is no such group.");
+        }
+        await this.memberships.deleteMany({ group });
+        await this.invites.deleteMany({ group });
+        await this.groups.deleteOne({ _id: group });
+        return {};
+    }
+
     async removeMember({ group, user }: { group: string; user: string }) {
         await this.#checkRemovableMember(group, user, () =>
             new CannotRemoveOwner("The owner cannot be removed from the group."));

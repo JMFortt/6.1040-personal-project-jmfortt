@@ -14,6 +14,7 @@ export default {
       new URL("./design/compositions/Attendance.md", import.meta.url),
       new URL("./design/compositions/Auth.md", import.meta.url),
       new URL("./design/compositions/Classes.md", import.meta.url),
+      new URL("./design/compositions/Cleanup.md", import.meta.url),
       new URL("./design/compositions/Covers.md", import.meta.url),
       new URL("./design/compositions/Schedule.md", import.meta.url),
     ],

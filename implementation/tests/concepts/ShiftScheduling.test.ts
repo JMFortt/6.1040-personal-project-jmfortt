@@ -172,14 +172,18 @@ describe("ShiftScheduling", () => {
         expect(await scheduling._weeks({ context: "6.123" })).toHaveLength(1);
     });
 
-    test("deleting a week removes it and its shifts", async () => {
+    test("deleting a week removes only the week, leaving its shifts to be deleted one by one", async () => {
         await mondaySlot();
         const { week } = await scheduling.publishWeek({ context: "6.123", start: WEEK, name: "Week" });
         const [shift] = await scheduling._shiftsInWeek({ week });
 
         await scheduling.deleteWeek({ week });
         expect(await scheduling._weeks({ context: "6.123" })).toEqual([]);
-        expect(await scheduling._shift({ shift: shift!.shift })).toEqual([]);
+        expect(await scheduling._week({ week })).toEqual([]);
+        // the shift is still there until it's deleted itself
+        expect(await scheduling._shiftsInWeek({ week })).toHaveLength(1);
+        await scheduling.deleteShift({ shift: shift!.shift });
+        expect(await scheduling._shiftsInWeek({ week })).toEqual([]);
         await expect(scheduling.deleteWeek({ week })).rejects.toThrow(WeekNotFound);
     });
 
