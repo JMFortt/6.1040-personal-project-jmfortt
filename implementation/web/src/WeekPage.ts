@@ -1,7 +1,17 @@
 import { computed, defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, errorMessage, loggedOutBy, makePerform, savedSession, saveSession, SCHEDULE_MESSAGES, SESSION_EXPIRED, UNREACHABLE } from "./api.ts";
 import { ScheduleBoard, type Block, type Person } from "./ScheduleBoard.ts";
-import { dateLabel, dayAndHours, timeIn, weekDayLabels } from "./time.ts";
+import { dateLabel, dayAndHours, hoursLabel, timeIn, weekDayLabels } from "./time.ts";
+
+interface CoverRow {
+    request: string;
+    shift: string;
+    start: string;
+    end: string;
+    requester: string;
+    claimer: string | null;
+    status: string;
+}
 
 interface AttendanceRow {
     user: string;
@@ -35,6 +45,7 @@ export const WeekPage = defineComponent({
         const start = ref("");
         const shifts = ref<ShiftRow[]>([]);
         const roster = ref<Person[]>([]);
+        const covers = ref<CoverRow[]>([]);
         const loading = ref(true);
         const loadError = ref("");
 
@@ -45,17 +56,19 @@ export const WeekPage = defineComponent({
         }
         const perform = makePerform(sessionExpired);
 
-        // fetches the week and the roster; also what the Refresh button does
+        // fetches the week, the roster, and the week's cover requests; also what the Refresh button does
         async function load() {
             const session = savedSession();
             if (session === null) return sessionExpired();
             loadError.value = "";
             try {
-                const [weekResult, rosterResult] = await Promise.all([
+                const [weekResult, rosterResult, coversResult] = await Promise.all([
                     client.schedule.week({ session, week: props.week }),
                     client.classes.roster({ session, group: props.group }),
+                    client.covers.week({ session, week: props.week }),
                 ]);
-                if (loggedOutBy(weekResult) || loggedOutBy(rosterResult)) return sessionExpired();
+                if ([weekResult, rosterResult, coversResult].some(loggedOutBy)) return sessionExpired();
+                if (!("error" in coversResult)) covers.value = coversResult.requests;
                 if ("error" in weekResult) {
                     loadError.value = errorMessage(weekResult.error, {
                         NOT_FOUND: "This week no longer exists.",
@@ -161,6 +174,61 @@ export const WeekPage = defineComponent({
             return ok;
         }
 
+        // --- cover requests ---
+
+        const coverError = ref("");
+        const coverBusy = ref(false);
+        const ACTIVE = ["OPEN", "CLAIMED"];
+
+        // requests list user ids; show usernames from the roster
+        function nameOf(user: string | null) {
+            if (user === null) return "";
+            return roster.value.find((p) => p.user === user)?.username ?? "someone no longer in the class";
+        }
+
+        function isOn(shift: string, user: string) {
+            return shifts.value.find((s) => s.shift === shift)?.assignees.some((a) => a.user === user) ?? false;
+        }
+
+        // your active request for a shift, if you've asked for a cover on it
+        function myActiveRequest(shift: string) {
+            return covers.value.find((c) => c.shift === shift && c.requester === props.me && ACTIVE.includes(c.status)) ?? null;
+        }
+
+        function canClaim(c: CoverRow) {
+            return c.status === "OPEN" && c.requester !== props.me && !isOn(c.shift, props.me);
+        }
+
+        async function cover(call: (session: string) => Promise<object>, messages: Record<string, string>) {
+            if (await perform(call, messages, coverError, coverBusy)) await load();
+        }
+
+        const requestCover = (shift: string) =>
+            cover((session) => client.covers.request({ session, shift }), {
+                CONFLICT: "You already have an open request for this shift.",
+                INVALID_REQUEST: "You're not on this shift.",
+            });
+        const claim = (request: string) =>
+            cover((session) => client.covers.claim({ session, request }), {
+                CONFLICT: "This request is no longer open, or you're already on that shift.",
+                FORBIDDEN: "Only members of this class can claim covers.",
+            });
+        const approve = (request: string) =>
+            cover((session) => client.covers.approve({ session, request }), {
+                CONFLICT: "This can't be approved: it isn't claimed, or the schedule changed since it was claimed.",
+                FORBIDDEN: "Only TAs and staff can approve covers.",
+            });
+        const deny = (request: string) =>
+            cover((session) => client.covers.deny({ session, request }), {
+                CONFLICT: "This request has already been resolved.",
+                FORBIDDEN: "Only TAs and staff can deny covers.",
+            });
+        const withdraw = (request: string) =>
+            cover((session) => client.covers.withdraw({ session, request }), {
+                CONFLICT: "This request has already been resolved.",
+                FORBIDDEN: "Only the person who asked can withdraw it.",
+            });
+
         // --- renaming and deleting the week ---
 
         const renameTo = ref("");
@@ -195,6 +263,8 @@ export const WeekPage = defineComponent({
         onMounted(load);
 
         return {
+            covers, coverError, coverBusy, nameOf, isOn, myActiveRequest, canClaim, hoursLabel,
+            requestCover, claim, approve, deny, withdraw, ACTIVE,
             isLA, select, statusOf, setStatus, attendanceError, attendanceBusy,
             canEdit, name, start, roster, loading, loadError, load, dayLabels, blocks, dateLabel,
             scheduleError, scheduleBusy, assignShift, unassignShift, deleteShift, addShift,
@@ -252,8 +322,38 @@ export const WeekPage = defineComponent({
                     </p>
                     <p v-else>You're not on this shift.</p>
                     <p v-if="attendanceError" class="error">{{ attendanceError }}</p>
+
+                    <template v-if="isOn(block.id, me)">
+                        <h4>Cover</h4>
+                        <div v-if="myActiveRequest(block.id)" class="buttons">
+                            <span>You asked for a cover ({{ myActiveRequest(block.id).status.toLowerCase() }}).</span>
+                            <button :disabled="coverBusy" @click="withdraw(myActiveRequest(block.id).request)">Withdraw</button>
+                        </div>
+                        <button v-else :disabled="coverBusy" @click="requestCover(block.id)">Request cover</button>
+                    </template>
                 </template>
             </ScheduleBoard>
+
+            <h3>Cover requests</h3>
+            <p v-if="coverError" class="error">{{ coverError }}</p>
+            <p v-if="covers.length === 0">No cover requests this week.</p>
+            <ul v-else>
+                <li v-for="c in covers" :key="c.request">
+                    {{ dateLabel(c.start) }} · {{ hoursLabel(c.start, c.end) }} ·
+                    {{ nameOf(c.requester) }} → {{ c.claimer === null ? "(open)" : nameOf(c.claimer) }}
+                    · {{ c.status }}
+                    <button v-if="canClaim(c)" :disabled="coverBusy" @click="claim(c.request)">Claim</button>
+                    <template v-if="canEdit && ACTIVE.includes(c.status)">
+                        <button v-if="c.status === 'CLAIMED'" :disabled="coverBusy" @click="approve(c.request)">Approve</button>
+                        <button :disabled="coverBusy" @click="deny(c.request)">Deny</button>
+                    </template>
+                    <button
+                        v-if="c.requester === me && ACTIVE.includes(c.status)"
+                        :disabled="coverBusy"
+                        @click="withdraw(c.request)"
+                    >Withdraw</button>
+                </li>
+            </ul>
 
             <template v-if="canEdit">
                 <h3>This week</h3>
