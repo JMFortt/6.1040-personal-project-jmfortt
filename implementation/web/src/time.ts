@@ -37,6 +37,12 @@ export function timeIn(weekStart: string, day: number, hour: number) {
     return new Date(new Date(weekStart).getTime() + day * DAY_MS + hour * HOUR_MS).toISOString();
 }
 
+// a shift's hours, like "3 PM–5 PM"
+export function hoursLabel(start: string, end: string) {
+    const { startHour, endHour } = dayAndHours(start, end);
+    return `${hourLabel(startHour)}–${hourLabel(endHour)}`;
+}
+
 // "Mon, Oct 19"
 export function dateLabel(iso: string) {
     return new Date(iso).toLocaleDateString(undefined, { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" });

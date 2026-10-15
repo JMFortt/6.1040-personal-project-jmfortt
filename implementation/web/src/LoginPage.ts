@@ -41,7 +41,7 @@ export const LoginPage = defineComponent({
                     return;
                 }
                 saveSession(result.session);
-                emit("logged-in", username.value);
+                emit("logged-in", { username: username.value, user: result.user });
             } catch {
                 error.value = UNREACHABLE;
             } finally {

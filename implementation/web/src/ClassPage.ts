@@ -1,7 +1,7 @@
 import { computed, defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, errorMessage, loggedOutBy, makePerform, savedSession, saveSession, SCHEDULE_MESSAGES, SESSION_EXPIRED, UNREACHABLE } from "./api.ts";
 import { ScheduleBoard, type Block, type Person } from "./ScheduleBoard.ts";
-import { dateLabel, mondayOf, WEEKDAYS, type Weekday } from "./time.ts";
+import { dateLabel, hoursLabel, mondayOf, WEEKDAYS, type Weekday } from "./time.ts";
 
 export interface ClassRow {
     group: string;
@@ -22,6 +22,14 @@ interface SlotRow {
     assignees: Person[];
 }
 
+// one of your shifts in this class, with your status (null if not marked yet)
+interface MyAttendanceRow {
+    shift: string;
+    start: string;
+    end: string;
+    status: string | null;
+}
+
 interface WeekRow {
     week: string;
     name: string;
@@ -35,14 +43,17 @@ export const ClassPage = defineComponent({
         group: { type: String, required: true },
         name: { type: String, required: true },
         role: { type: String, required: true },
+        me: { type: String, required: true },
     },
     emits: ["back", "logged-out", "open-week"],
     setup(props, { emit }) {
         const canEdit = computed(() => props.role === "TA" || props.role === "STAFF");
+        const isLA = computed(() => props.role === "LA");
 
         const roster = ref<MemberRow[]>([]);
         const slots = ref<SlotRow[]>([]);
         const weeks = ref<WeekRow[]>([]);
+        const myAttendance = ref<MyAttendanceRow[]>([]);
         const loading = ref(true);
         const loadError = ref("");
 
@@ -60,12 +71,13 @@ export const ClassPage = defineComponent({
             loadError.value = "";
             try {
                 const group = props.group;
-                const [rosterResult, templateResult, weeksResult] = await Promise.all([
+                const [rosterResult, templateResult, weeksResult, attendanceResult] = await Promise.all([
                     client.classes.roster({ session, group }),
                     client.schedule.template({ session, group }),
                     client.schedule.weeks({ session, group }),
+                    client.attendance.mine({ session, group }),
                 ]);
-                const results = [rosterResult, templateResult, weeksResult];
+                const results = [rosterResult, templateResult, weeksResult, attendanceResult];
                 if (results.some(loggedOutBy)) return sessionExpired();
                 for (const result of results) {
                     if ("error" in result) {
@@ -76,6 +88,7 @@ export const ClassPage = defineComponent({
                 if (!("error" in rosterResult)) roster.value = rosterResult.roster;
                 if (!("error" in templateResult)) slots.value = templateResult.template;
                 if (!("error" in weeksResult)) weeks.value = weeksResult.weeks;
+                if (!("error" in attendanceResult)) myAttendance.value = attendanceResult.records;
             } catch {
                 loadError.value = UNREACHABLE;
             } finally {
@@ -187,6 +200,7 @@ export const ClassPage = defineComponent({
         onMounted(load);
 
         return {
+            isLA, myAttendance, hoursLabel,
             canEdit, roster, weeks, loading, loadError, load,
             blocks, scheduleError, scheduleBusy, assignSlot, unassignSlot, deleteSlot, addSlot,
             publishDate, publishName, publishError, publishing, publish, dateLabel,
@@ -212,6 +226,8 @@ export const ClassPage = defineComponent({
                 add-label="Add slot"
                 :error="scheduleError"
                 :busy="scheduleBusy"
+                :me="me"
+                :grey-others="isLA"
                 @assign="assignSlot"
                 @unassign="unassignSlot"
                 @remove="deleteSlot"
@@ -237,6 +253,14 @@ export const ClassPage = defineComponent({
                 </div>
                 <p v-if="publishError" class="error">{{ publishError }}</p>
             </form>
+
+            <h3>My attendance</h3>
+            <p v-if="myAttendance.length === 0">You haven't been on any published shifts yet.</p>
+            <ul v-else>
+                <li v-for="r in myAttendance" :key="r.shift">
+                    {{ dateLabel(r.start) }} · {{ hoursLabel(r.start, r.end) }} — {{ r.status ?? "not marked" }}
+                </li>
+            </ul>
 
             <h3>Roster</h3>
             <ul>

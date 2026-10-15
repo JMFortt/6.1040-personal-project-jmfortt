@@ -3,6 +3,12 @@ import { client, errorMessage, loggedOutBy, makePerform, savedSession, saveSessi
 import { ScheduleBoard, type Block, type Person } from "./ScheduleBoard.ts";
 import { dateLabel, dayAndHours, timeIn, weekDayLabels } from "./time.ts";
 
+interface AttendanceRow {
+    user: string;
+    username: string;
+    status: string;
+}
+
 interface ShiftRow {
     shift: string;
     start: string;
@@ -18,10 +24,12 @@ export const WeekPage = defineComponent({
         week: { type: String, required: true },
         group: { type: String, required: true },
         role: { type: String, required: true },
+        me: { type: String, required: true },
     },
     emits: ["back", "logged-out"],
     setup(props, { emit }) {
         const canEdit = computed(() => props.role === "TA" || props.role === "STAFF");
+        const isLA = computed(() => props.role === "LA");
 
         const name = ref("");
         const start = ref("");
@@ -60,6 +68,7 @@ export const WeekPage = defineComponent({
                 shifts.value = weekResult.week.shifts;
                 if (!("error" in rosterResult)) roster.value = rosterResult.roster;
                 if (renameTo.value === "") renameTo.value = name.value;
+                if (selectedShift.value !== null) await loadAttendance(selectedShift.value);
             } catch {
                 loadError.value = UNREACHABLE;
             } finally {
@@ -99,6 +108,59 @@ export const WeekPage = defineComponent({
                 { INVALID_REQUEST: "Check the day, hours, and capacity." },
             );
 
+        // --- attendance for the selected shift ---
+
+        const selectedShift = ref<string | null>(null);
+        // records per shift id (TAs and staff get everyone's; others get only their own)
+        const attendance = ref<Record<string, AttendanceRow[]>>({});
+        const attendanceError = ref("");
+        const attendanceBusy = ref(false);
+
+        async function loadAttendance(shift: string) {
+            const ok = await perform(
+                async (session) => {
+                    const result = await client.attendance.shift({ session, shift });
+                    if (!("error" in result)) attendance.value = { ...attendance.value, [shift]: result.records };
+                    return result;
+                },
+                { NOT_FOUND: "That shift no longer exists. Try refreshing." },
+                attendanceError,
+                attendanceBusy,
+            );
+            return ok;
+        }
+
+        async function select(shift: string | null) {
+            selectedShift.value = shift;
+            attendanceError.value = "";
+            if (shift !== null) await loadAttendance(shift);
+        }
+
+        // "" means not marked
+        function statusOf(shift: string, user: string) {
+            return attendance.value[shift]?.find((r) => r.user === user)?.status ?? "";
+        }
+
+        // picking "not marked" clears the mark; anything else sets it
+        async function setStatus(shift: string, member: string, status: string) {
+            const ok = await perform(
+                (session) =>
+                    status === ""
+                        ? client.attendance.unmark({ session, shift, member })
+                        : client.attendance.mark({ session, shift, member, status: status as "PRESENT" | "ABSENT" | "LATE" }),
+                {
+                    FORBIDDEN: "Only TAs and staff can take attendance.",
+                    INVALID_REQUEST: "They aren't on this shift.",
+                    NOT_FOUND: "There was nothing to clear. Try refreshing.",
+                },
+                attendanceError,
+                attendanceBusy,
+            );
+            // reload either way, so the dropdown shows what's actually saved
+            await loadAttendance(shift);
+            return ok;
+        }
+
         // --- renaming and deleting the week ---
 
         const renameTo = ref("");
@@ -133,6 +195,7 @@ export const WeekPage = defineComponent({
         onMounted(load);
 
         return {
+            isLA, select, statusOf, setStatus, attendanceError, attendanceBusy,
             canEdit, name, start, roster, loading, loadError, load, dayLabels, blocks, dateLabel,
             scheduleError, scheduleBusy, assignShift, unassignShift, deleteShift, addShift,
             renameTo, weekError, weekBusy, rename, deleteWeek,
@@ -158,11 +221,39 @@ export const WeekPage = defineComponent({
                 add-label="Add shift"
                 :error="scheduleError"
                 :busy="scheduleBusy"
+                :me="me"
+                :grey-others="isLA"
                 @assign="assignShift"
                 @unassign="unassignShift"
                 @remove="deleteShift"
                 @add="addShift"
-            />
+                @select="select"
+            >
+                <template #panel="{ block }">
+                    <h4>Attendance</h4>
+                    <template v-if="canEdit">
+                        <p v-if="block.assignees.length === 0">Nobody to mark.</p>
+                        <div v-for="a in block.assignees" :key="a.user" class="buttons">
+                            <span>{{ a.username }}</span>
+                            <select
+                                :value="statusOf(block.id, a.user)"
+                                :disabled="attendanceBusy"
+                                @change="setStatus(block.id, a.user, $event.target.value)"
+                            >
+                                <option value="">not marked</option>
+                                <option>PRESENT</option>
+                                <option>ABSENT</option>
+                                <option>LATE</option>
+                            </select>
+                        </div>
+                    </template>
+                    <p v-else-if="block.assignees.some((a) => a.user === me)">
+                        You: {{ statusOf(block.id, me) || "not marked" }}
+                    </p>
+                    <p v-else>You're not on this shift.</p>
+                    <p v-if="attendanceError" class="error">{{ attendanceError }}</p>
+                </template>
+            </ScheduleBoard>
 
             <template v-if="canEdit">
                 <h3>This week</h3>

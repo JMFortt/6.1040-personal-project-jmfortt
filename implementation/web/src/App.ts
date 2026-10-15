@@ -10,6 +10,8 @@ export const App = defineComponent({
     components: { ClassPage, ClassesPage, LoginPage, WeekPage },
     setup() {
         const username = ref<string | null>(null);
+        // the logged-in user's id, so pages can tell which shifts are yours
+        const me = ref("");
         const checking = ref(true);
         // shown on the login page, e.g. when a session has expired
         const notice = ref("");
@@ -28,7 +30,10 @@ export const App = defineComponent({
                 try {
                     const result = await client.auth.current({ session });
                     if ("error" in result) saveSession(null);
-                    else username.value = result.account.username;
+                    else {
+                        username.value = result.account.username;
+                        me.value = result.account.user;
+                    }
                 } catch {
                     // server unreachable: fall through to the login page
                 }
@@ -36,9 +41,10 @@ export const App = defineComponent({
             checking.value = false;
         });
 
-        function loggedIn(name: string) {
+        function loggedIn(account: { username: string; user: string }) {
             notice.value = "";
-            username.value = name;
+            username.value = account.username;
+            me.value = account.user;
         }
 
         function loggedOut(message?: string) {
@@ -47,6 +53,7 @@ export const App = defineComponent({
             openWeek.value = null;
             logoutError.value = "";
             username.value = null;
+            me.value = "";
         }
 
         async function logout() {
@@ -88,7 +95,7 @@ export const App = defineComponent({
         }
 
         return {
-            username, checking, notice, openClass, openWeek, logoutError, loggingOut,
+            username, me, checking, notice, openClass, openWeek, logoutError, loggingOut,
             loggedIn, loggedOut, logout, open, back, openWeekPage, backToClass,
         };
     },
@@ -106,6 +113,7 @@ export const App = defineComponent({
                 :week="openWeek"
                 :group="openClass.group"
                 :role="openClass.role"
+                :me="me"
                 @back="backToClass"
                 @logged-out="loggedOut"
             />
@@ -114,6 +122,7 @@ export const App = defineComponent({
                 :group="openClass.group"
                 :name="openClass.name"
                 :role="openClass.role"
+                :me="me"
                 @back="back"
                 @open-week="openWeekPage"
                 @logged-out="loggedOut"

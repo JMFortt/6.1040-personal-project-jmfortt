@@ -30,11 +30,24 @@ export const ScheduleBoard = defineComponent({
         addLabel: { type: String, default: "Add" },
         error: { type: String, default: "" },
         busy: { type: Boolean, default: false },
+        // the viewer's user id; with greyOthers, blocks they aren't on are greyed out (used for LAs)
+        me: { type: String, default: "" },
+        greyOthers: { type: Boolean, default: false },
     },
-    emits: ["assign", "unassign", "remove", "add"],
+    emits: ["assign", "unassign", "remove", "add", "select"],
     setup(props, { emit }) {
         const selectedId = ref<string | null>(null);
         const selected = computed(() => props.blocks.find((b) => b.id === selectedId.value) ?? null);
+
+        // clicking a block selects it, clicking it again deselects; the page hears about either
+        function toggle(id: string) {
+            selectedId.value = selectedId.value === id ? null : id;
+            emit("select", selectedId.value);
+        }
+
+        function isOther(b: Block) {
+            return props.greyOthers && !b.assignees.some((a) => a.user === props.me);
+        }
 
         // show at least 9 AM-5 PM, stretched to fit every block
         const firstHour = computed(() => Math.min(9, ...props.blocks.map((b) => b.startHour)));
@@ -112,7 +125,7 @@ export const ScheduleBoard = defineComponent({
         return {
             ROW_PX, DAYS, hours, columns, selected, selectedId, assignable, member,
             day, startHour, endHour, capacity, formError, hourOptions,
-            position, summary, timeRange, hourLabel, assign, add,
+            position, summary, timeRange, hourLabel, assign, add, toggle, isOther,
         };
     },
     template: `
@@ -129,9 +142,13 @@ export const ScheduleBoard = defineComponent({
                             v-for="p in column"
                             :key="p.block.id"
                             class="block"
-                            :class="{ full: p.block.assignees.length >= p.block.capacity, selected: p.block.id === selectedId }"
+                            :class="{
+                                full: p.block.assignees.length >= p.block.capacity,
+                                other: isOther(p.block),
+                                selected: p.block.id === selectedId,
+                            }"
                             :style="position(p)"
-                            @click="selectedId = p.block.id === selectedId ? null : p.block.id"
+                            @click="toggle(p.block.id)"
                         >{{ summary(p.block) }}</button>
                     </div>
                 </div>
@@ -157,6 +174,8 @@ export const ScheduleBoard = defineComponent({
                 </template>
                 <button :disabled="busy" @click="$emit('remove', selected.id)">Delete</button>
             </div>
+            <!-- pages can add more to the panel here (the week page adds attendance) -->
+            <slot name="panel" :block="selected"></slot>
         </div>
         <p v-if="error" class="error">{{ error }}</p>
 
