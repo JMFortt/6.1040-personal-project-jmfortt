@@ -1,6 +1,16 @@
 import { conceptSet, registerConcept } from "@mit-sdg/sync-engine/assembly";
 import attendanceTrackingSpec from "@design/concepts/AttendanceTracking.md" with { type: "text" };
 import { AttendanceTrackingConcept, NoRecord } from "./concepts/AttendanceTracking.ts";
+import shiftTradingSpec from "@design/concepts/ShiftTrading.md" with { type: "text" };
+import {
+    ActiveRequestExists,
+    AlreadyResolved,
+    NotClaimed,
+    NotOpen,
+    OwnRequest,
+    RequestNotFound,
+    ShiftTradingConcept,
+} from "./concepts/ShiftTrading.ts";
 import roleBasedAccessingSpec from "@design/concepts/RoleBasedAccessing.md" with { type: "text" };
 import sessioningSpec from "@design/concepts/Sessioning.md" with { type: "text" };
 import shiftSchedulingSpec from "@design/concepts/ShiftScheduling.md" with { type: "text" };
@@ -87,11 +97,25 @@ const attendanceTracking = registerConcept({
     refusals: { NO_RECORD: NoRecord },
 });
 
+const shiftTrading = registerConcept({
+    class: ShiftTradingConcept,
+    spec: shiftTradingSpec,
+    refusals: {
+        ACTIVE_REQUEST_EXISTS: ActiveRequestExists,
+        REQUEST_NOT_FOUND: RequestNotFound,
+        NOT_OPEN: NotOpen,
+        OWN_REQUEST: OwnRequest,
+        NOT_CLAIMED: NotClaimed,
+        ALREADY_RESOLVED: AlreadyResolved,
+    },
+});
+
 export const applicationConceptSet = conceptSet({
     UserAuthenticating: userAuthenticating,
     Sessioning: sessioning,
     RoleBasedAccessing: roleBasedAccessing,
     ShiftScheduling: shiftScheduling,
     AttendanceTracking: attendanceTracking,
+    ShiftTrading: shiftTrading,
 });
 export const { concepts } = applicationConceptSet;

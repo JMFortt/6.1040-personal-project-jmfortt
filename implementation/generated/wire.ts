@@ -164,6 +164,74 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
   };
+  "/covers/approve": {
+    input: {
+      "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["approve"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["approve"]>[0], ["request"]>>;
+    };
+    error: { error: AppWideError | "ALREADY_ASSIGNED" | "CANNOT_APPLY" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_ASSIGNED" | "NOT_CLAIMED" | "NOT_LOGGED_IN" | "NO_SUCH_REQUEST" | "NO_SUCH_SHIFT" | "REQUEST_NOT_FOUND" | "SHIFT_NOT_FOUND" };
+  };
+  "/covers/claim": {
+    input: {
+      "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["claim"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["claim"]>[0], ["request"]>>;
+    };
+    error: { error: AppWideError | "ALREADY_ON_SHIFT" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NOT_OPEN" | "NO_SUCH_REQUEST" | "NO_SUCH_SHIFT" | "OWN_REQUEST" | "REQUEST_NOT_FOUND" };
+  };
+  "/covers/deny": {
+    input: {
+      "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["deny"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["deny"]>[0], ["request"]>>;
+    };
+    error: { error: AppWideError | "ALREADY_RESOLVED" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_REQUEST" | "NO_SUCH_SHIFT" | "REQUEST_NOT_FOUND" };
+  };
+  "/covers/request": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["requestCover"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["requestCover"]>>, ["request"]>>;
+    };
+    error: { error: AppWideError | "ACTIVE_REQUEST_EXISTS" | "INVALID_INPUT" | "NOT_LOGGED_IN" | "NOT_ON_SHIFT" | "NO_SUCH_SHIFT" };
+  };
+  "/covers/week": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>>;
+    };
+    output: {
+      "requests": {
+        "claimer": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["claimer"]>>;
+        "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+        "request": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["request"]>>;
+        "requester": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["requester"]>>;
+        "shift": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>[0], ["shift"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["status"]>>;
+      }[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_WEEK" };
+  };
+  "/covers/withdraw": {
+    input: {
+      "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["withdraw"]>[0], ["request"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["withdraw"]>[0], ["request"]>>;
+    };
+    error: { error: AppWideError | "ALREADY_RESOLVED" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_REQUEST" | "REQUEST_NOT_FOUND" };
+  };
   "/invites/accept": {
     input: {
       "invite": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["accept"]>[0], ["invite"]>>;
@@ -524,6 +592,74 @@ export type TAbleWireHttp = {
       }[];
     };
     error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
+  "/covers/approve": {
+    input: {
+      "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["approve"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["approve"]>[0], ["request"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/covers/claim": {
+    input: {
+      "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["claim"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["claim"]>[0], ["request"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/covers/deny": {
+    input: {
+      "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["deny"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["deny"]>[0], ["request"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/covers/request": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["requestCover"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["requestCover"]>>, ["request"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/covers/week": {
+    input: {
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "week": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_week"]>[0], ["week"]>>;
+    };
+    output: {
+      "requests": {
+        "claimer": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["claimer"]>>;
+        "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+        "request": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["request"]>>;
+        "requester": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["requester"]>>;
+        "shift": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>[0], ["shift"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["status"]>>;
+      }[];
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/covers/withdraw": {
+    input: {
+      "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["withdraw"]>[0], ["request"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["withdraw"]>[0], ["request"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
   };
   "/invites/accept": {
     input: {

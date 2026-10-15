@@ -4,6 +4,8 @@ import { composition as access } from "./compositions/Access.ts";
 import { composition as attendance } from "./compositions/Attendance.ts";
 import { AttendanceTrackingConcept } from "./concepts/AttendanceTracking.ts";
 import { composition as auth } from "./compositions/Auth.ts";
+import { composition as covers } from "./compositions/Covers.ts";
+import { ShiftTradingConcept } from "./concepts/ShiftTrading.ts";
 import { composition as classes } from "./compositions/Classes.ts";
 import { composition as schedule } from "./compositions/Schedule.ts";
 import { RoleBasedAccessingConcept } from "./concepts/RoleBasedAccessing.ts";
@@ -23,8 +25,16 @@ export function assembleApplication(database: Db = db) {
       RoleBasedAccessing: new RoleBasedAccessingConcept(database),
       ShiftScheduling: new ShiftSchedulingConcept(database),
       AttendanceTracking: new AttendanceTrackingConcept(database),
+      ShiftTrading: new ShiftTradingConcept(database),
     },
-    composition: { Access: access, Attendance: attendance, Auth: auth, Classes: classes, Schedule: schedule },
+    composition: {
+      Access: access,
+      Attendance: attendance,
+      Auth: auth,
+      Classes: classes,
+      Covers: covers,
+      Schedule: schedule,
+    },
     // Print what went wrong. Otherwise a failure only shows up as INTERNAL_ERROR.
     rawFaultReporter: ({ error }) => console.error(error),
   });

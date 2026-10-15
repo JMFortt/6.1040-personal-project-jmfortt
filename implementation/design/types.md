@@ -3,8 +3,8 @@
 Every concept that refers to a person uses the users that UserAuthenticating
 registers, so a session belongs to a registered user. Each class is a
 RoleBasedAccessing group, and its members hold one of TAble's staff roles.
-Every shift belongs to a class, and attendance is recorded per shift in a
-published week.
+Every shift belongs to a class, and attendance and cover requests are per shift
+in a published week.
 
 ```types
 concrete StaffRole
@@ -28,4 +28,8 @@ instantiate ShiftScheduling with
 instantiate AttendanceTracking with
   User is UserAuthenticating.User
   Event is ShiftScheduling.Shift
+
+instantiate ShiftTrading with
+  User is UserAuthenticating.User
+  Shift is ShiftScheduling.Shift
 ```

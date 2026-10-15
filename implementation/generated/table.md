@@ -140,6 +140,39 @@ Defined in [ShiftScheduling](../design/concepts/ShiftScheduling.md), line 1.
   - `Context` is `RoleBasedAccessing.Group` — [Application types](../design/types.md), line 26.
   - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 25.
 
+### ShiftTrading
+
+Defined in [ShiftTrading](../design/concepts/ShiftTrading.md), line 1.
+
+#### Actions
+
+- `requestCover(requester: User, shift: Shift) : returns (request: Request)`
+  - Refuses `ACTIVE_REQUEST_EXISTS`: You already have an active request for this shift.
+- `claim(request: Request, claimer: User) : returns ()`
+  - Refuses `REQUEST_NOT_FOUND`: There is no such request.
+  - Refuses `NOT_OPEN`: This request is no longer open.
+  - Refuses `OWN_REQUEST`: You cannot claim your own request.
+- `approve(request: Request) : returns ()`
+  - Refuses `REQUEST_NOT_FOUND`: There is no such request.
+  - Refuses `NOT_CLAIMED`: Only a claimed request can be approved.
+- `deny(request: Request) : returns ()`
+  - Refuses `REQUEST_NOT_FOUND`: There is no such request.
+  - Refuses `ALREADY_RESOLVED`: This request has already been resolved.
+- `withdraw(request: Request) : returns ()`
+  - Refuses `REQUEST_NOT_FOUND`: There is no such request.
+  - Refuses `ALREADY_RESOLVED`: This request has already been resolved.
+
+#### Queries
+
+- `_request(request: Request) : optional (requester: User, shift: Shift, claimer: User | null, status: Status)`
+- `_requestsForShift(shift: Shift) : many (request: Request, requester: User, claimer: User | null, status: Status)`
+
+#### Instances
+
+- `ShiftTrading` — instance of `ShiftTrading` — [Application types](../design/types.md), line 32.
+  - `Shift` is `ShiftScheduling.Shift` — [Application types](../design/types.md), line 34.
+  - `User` is `UserAuthenticating.User` — [Application types](../design/types.md), line 33.
+
 ### UserAuthenticating
 
 Defined in [UserAuthenticating](../design/concepts/UserAuthenticating.md), line 1.
@@ -177,6 +210,7 @@ Authored path: `Access.IsMember`.
 - Covered by [Access](../design/compositions/Access.md), line 13.
 - Covered by [Attendance](../design/compositions/Attendance.md), line 19.
 - Covered by [Classes](../design/compositions/Classes.md), line 35.
+- Covered by [Covers](../design/compositions/Covers.md), line 15.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 9.
 
 ```view
@@ -184,10 +218,23 @@ Authored path: `Access.IsMember`.
   where RoleBasedAccessing._role (group, user)
 ```
 
+### (user) may approve cover requests in (group)
+
+Authored path: `Access.MayApproveRequests`.
+- Covered by [Access](../design/compositions/Access.md), line 18.
+- Covered by [Covers](../design/compositions/Covers.md), line 27.
+
+```view
+(user) may approve cover requests in (group) — inputs (user, group); outputs (); bindings (role)
+  where
+    RoleBasedAccessing._role (group, user) has (role)
+    role is among ["TA", "STAFF"]
+```
+
 ### (user) may edit the schedule of (group)
 
 Authored path: `Access.MayEditSchedule`.
-- Covered by [Access](../design/compositions/Access.md), line 14.
+- Covered by [Access](../design/compositions/Access.md), line 15.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 8.
 
 ```view
@@ -200,7 +247,7 @@ Authored path: `Access.MayEditSchedule`.
 ### (user) may manage the members of (group)
 
 Authored path: `Access.MayManageMembers`.
-- Covered by [Access](../design/compositions/Access.md), line 17.
+- Covered by [Access](../design/compositions/Access.md), line 19.
 - Covered by [Classes](../design/compositions/Classes.md), line 17.
 
 ```view
@@ -211,7 +258,7 @@ Authored path: `Access.MayManageMembers`.
 ### (user) may mark attendance in (group)
 
 Authored path: `Access.MayMarkAttendance`.
-- Covered by [Access](../design/compositions/Access.md), line 15.
+- Covered by [Access](../design/compositions/Access.md), line 16.
 - Covered by [Attendance](../design/compositions/Attendance.md), line 6.
 
 ```view
@@ -224,7 +271,7 @@ Authored path: `Access.MayMarkAttendance`.
 ### (user) may view everyone's attendance in (group)
 
 Authored path: `Access.MayViewAllAttendance`.
-- Covered by [Access](../design/compositions/Access.md), line 16.
+- Covered by [Access](../design/compositions/Access.md), line 17.
 - Covered by [Attendance](../design/compositions/Attendance.md), line 17.
 
 ```view
@@ -313,6 +360,26 @@ Former "the classes of (user)" — inputs (user); bindings (group, name, role); 
       group
       name
       role
+```
+
+### the cover requests in (week)
+
+Authored path: `Covers.WeekRequests`.
+- Covered by [Covers](../design/compositions/Covers.md), line 43.
+
+```former
+Former "the cover requests in (week)" — inputs (week); bindings (shift, start, end, request, requester, claimer, status); promises exactly one record — forms:
+  each ShiftScheduling._shiftsInWeek (week) has (end, shift, start)
+    where ShiftTrading._requestsForShift (shift) has (claimer, request, requester, status)
+    arranged by start
+    form a record of
+      claimer
+      end
+      request
+      requester
+      shift
+      start
+      status
 ```
 
 ### the invites of (user)
@@ -1063,6 +1130,553 @@ where
   earlier, RequestBoundary.request (path: "/invites/mine", requestId, session)
 then
   RequestBoundary.respond (invites: former "the invites of (user)" with (user), requestId)
+```
+
+### Covers.ApplyCover
+
+Authored path: `Covers.ApplyCover`.
+- Covered by [Covers](../design/compositions/Covers.md), line 7.
+
+```reaction
+when ShiftTrading.approve (request)
+where
+  ShiftTrading._request (request) has (claimer, requester, shift)
+then
+  ShiftScheduling.reassign (from: requester, shift, to: claimer)
+```
+
+### Covers.Approve
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 36.
+
+```reaction
+when RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Covers.Approve:allowed#2
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 36.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Approve
+where
+  earlier, RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+  ShiftTrading._request (request) has (claimer, requester, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may approve cover requests in (group)" with (group, user)
+  ShiftScheduling._assignees (shift) has (user: requester)
+  no ShiftScheduling._assignees (shift) has (user: claimer)
+then
+  ShiftTrading.approve (request)
+```
+
+### Covers.Approve:allowed#3
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 36.
+
+```reaction
+when ShiftTrading.approve (request), asked by Covers.Approve:allowed#2
+where
+  earlier, RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+then
+  RequestBoundary.respond (request, requestId)
+```
+
+### Covers.Approve:claimer-already-on#2
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 36.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Approve
+where
+  earlier, RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+  ShiftTrading._request (request) has (claimer, requester, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may approve cover requests in (group)" with (group, user)
+  ShiftScheduling._assignees (shift) has (user: requester)
+  ShiftScheduling._assignees (shift) has (user: claimer)
+then
+  RequestBoundary.respond (error: "CANNOT_APPLY", requestId)
+```
+
+### Covers.Approve:no-request#2
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 36.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Approve
+where
+  earlier, RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+  no ShiftTrading._request (request)
+then
+  RequestBoundary.respond (error: "NO_SUCH_REQUEST", requestId)
+```
+
+### Covers.Approve:no-shift#2
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 36.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Approve
+where
+  earlier, RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Covers.Approve:not-allowed#2
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 36.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Approve
+where
+  earlier, RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) may approve cover requests in (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Covers.Approve:requester-gone#2
+
+Authored path: `Covers.Approve`.
+- Covered by [Covers](../design/compositions/Covers.md), line 28.
+- Covered by [Covers](../design/compositions/Covers.md), line 36.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Approve
+where
+  earlier, RequestBoundary.request (path: "/covers/approve", request, requestId, session)
+  ShiftTrading._request (request) has (requester, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may approve cover requests in (group)" with (group, user)
+  no ShiftScheduling._assignees (shift) has (user: requester)
+then
+  RequestBoundary.respond (error: "CANNOT_APPLY", requestId)
+```
+
+### Covers.Claim
+
+Authored path: `Covers.Claim`.
+- Covered by [Covers](../design/compositions/Covers.md), line 16.
+- Covered by [Covers](../design/compositions/Covers.md), line 21.
+
+```reaction
+when RequestBoundary.request (path: "/covers/claim", request, requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Covers.Claim:allowed#2
+
+Authored path: `Covers.Claim`.
+- Covered by [Covers](../design/compositions/Covers.md), line 16.
+- Covered by [Covers](../design/compositions/Covers.md), line 21.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Claim
+where
+  earlier, RequestBoundary.request (path: "/covers/claim", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) is a member of (group)" with (group, user)
+  no ShiftScheduling._assignees (shift) has (user)
+then
+  ShiftTrading.claim (claimer: user, request)
+```
+
+### Covers.Claim:allowed#3
+
+Authored path: `Covers.Claim`.
+- Covered by [Covers](../design/compositions/Covers.md), line 16.
+- Covered by [Covers](../design/compositions/Covers.md), line 21.
+
+```reaction
+when ShiftTrading.claim (claimer: user, request), asked by Covers.Claim:allowed#2
+where
+  earlier, RequestBoundary.request (path: "/covers/claim", request, requestId, session)
+then
+  RequestBoundary.respond (request, requestId)
+```
+
+### Covers.Claim:already-on-shift#2
+
+Authored path: `Covers.Claim`.
+- Covered by [Covers](../design/compositions/Covers.md), line 16.
+- Covered by [Covers](../design/compositions/Covers.md), line 21.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Claim
+where
+  earlier, RequestBoundary.request (path: "/covers/claim", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) is a member of (group)" with (group, user)
+  ShiftScheduling._assignees (shift) has (user)
+then
+  RequestBoundary.respond (error: "ALREADY_ON_SHIFT", requestId)
+```
+
+### Covers.Claim:no-request#2
+
+Authored path: `Covers.Claim`.
+- Covered by [Covers](../design/compositions/Covers.md), line 16.
+- Covered by [Covers](../design/compositions/Covers.md), line 21.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Claim
+where
+  earlier, RequestBoundary.request (path: "/covers/claim", request, requestId, session)
+  no ShiftTrading._request (request)
+then
+  RequestBoundary.respond (error: "NO_SUCH_REQUEST", requestId)
+```
+
+### Covers.Claim:no-shift#2
+
+Authored path: `Covers.Claim`.
+- Covered by [Covers](../design/compositions/Covers.md), line 16.
+- Covered by [Covers](../design/compositions/Covers.md), line 21.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Claim
+where
+  earlier, RequestBoundary.request (path: "/covers/claim", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Covers.Claim:not-member#2
+
+Authored path: `Covers.Claim`.
+- Covered by [Covers](../design/compositions/Covers.md), line 16.
+- Covered by [Covers](../design/compositions/Covers.md), line 21.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Claim
+where
+  earlier, RequestBoundary.request (path: "/covers/claim", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Covers.Deny
+
+Authored path: `Covers.Deny`.
+- Covered by [Covers](../design/compositions/Covers.md), line 29.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
+
+```reaction
+when RequestBoundary.request (path: "/covers/deny", request, requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Covers.Deny:allowed#2
+
+Authored path: `Covers.Deny`.
+- Covered by [Covers](../design/compositions/Covers.md), line 29.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Deny
+where
+  earlier, RequestBoundary.request (path: "/covers/deny", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may approve cover requests in (group)" with (group, user)
+then
+  ShiftTrading.deny (request)
+```
+
+### Covers.Deny:allowed#3
+
+Authored path: `Covers.Deny`.
+- Covered by [Covers](../design/compositions/Covers.md), line 29.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
+
+```reaction
+when ShiftTrading.deny (request), asked by Covers.Deny:allowed#2
+where
+  earlier, RequestBoundary.request (path: "/covers/deny", request, requestId, session)
+then
+  RequestBoundary.respond (request, requestId)
+```
+
+### Covers.Deny:no-request#2
+
+Authored path: `Covers.Deny`.
+- Covered by [Covers](../design/compositions/Covers.md), line 29.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Deny
+where
+  earlier, RequestBoundary.request (path: "/covers/deny", request, requestId, session)
+  no ShiftTrading._request (request)
+then
+  RequestBoundary.respond (error: "NO_SUCH_REQUEST", requestId)
+```
+
+### Covers.Deny:no-shift#2
+
+Authored path: `Covers.Deny`.
+- Covered by [Covers](../design/compositions/Covers.md), line 29.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Deny
+where
+  earlier, RequestBoundary.request (path: "/covers/deny", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Covers.Deny:not-allowed#2
+
+Authored path: `Covers.Deny`.
+- Covered by [Covers](../design/compositions/Covers.md), line 29.
+- Covered by [Covers](../design/compositions/Covers.md), line 37.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Deny
+where
+  earlier, RequestBoundary.request (path: "/covers/deny", request, requestId, session)
+  ShiftTrading._request (request) has (shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) may approve cover requests in (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Covers.ForWeek
+
+Authored path: `Covers.ForWeek`.
+- Covered by [Covers](../design/compositions/Covers.md), line 42.
+- Covered by [Covers](../design/compositions/Covers.md), line 46.
+
+```reaction
+when RequestBoundary.request (path: "/covers/week", requestId, session, week)
+then
+  Sessioning.current (session)
+```
+
+### Covers.ForWeek:member#2
+
+Authored path: `Covers.ForWeek`.
+- Covered by [Covers](../design/compositions/Covers.md), line 42.
+- Covered by [Covers](../design/compositions/Covers.md), line 46.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.ForWeek
+where
+  earlier, RequestBoundary.request (path: "/covers/week", requestId, session, week)
+  ShiftScheduling._week (week) has (context: group)
+  view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (requestId, requests: former "the cover requests in (week)" with (week))
+```
+
+### Covers.ForWeek:no-week#2
+
+Authored path: `Covers.ForWeek`.
+- Covered by [Covers](../design/compositions/Covers.md), line 42.
+- Covered by [Covers](../design/compositions/Covers.md), line 46.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.ForWeek
+where
+  earlier, RequestBoundary.request (path: "/covers/week", requestId, session, week)
+  no ShiftScheduling._week (week)
+then
+  RequestBoundary.respond (error: "NO_SUCH_WEEK", requestId)
+```
+
+### Covers.ForWeek:not-member#2
+
+Authored path: `Covers.ForWeek`.
+- Covered by [Covers](../design/compositions/Covers.md), line 42.
+- Covered by [Covers](../design/compositions/Covers.md), line 46.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.ForWeek
+where
+  earlier, RequestBoundary.request (path: "/covers/week", requestId, session, week)
+  ShiftScheduling._week (week) has (context: group)
+  no view "(user) is a member of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Covers.Request
+
+Authored path: `Covers.Request`.
+- Covered by [Covers](../design/compositions/Covers.md), line 13.
+- Covered by [Covers](../design/compositions/Covers.md), line 20.
+
+```reaction
+when RequestBoundary.request (path: "/covers/request", requestId, session, shift)
+then
+  Sessioning.current (session)
+```
+
+### Covers.Request:no-shift#2
+
+Authored path: `Covers.Request`.
+- Covered by [Covers](../design/compositions/Covers.md), line 13.
+- Covered by [Covers](../design/compositions/Covers.md), line 20.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Request
+where
+  earlier, RequestBoundary.request (path: "/covers/request", requestId, session, shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Covers.Request:not-on-shift#2
+
+Authored path: `Covers.Request`.
+- Covered by [Covers](../design/compositions/Covers.md), line 13.
+- Covered by [Covers](../design/compositions/Covers.md), line 20.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Request
+where
+  earlier, RequestBoundary.request (path: "/covers/request", requestId, session, shift)
+  ShiftScheduling._shift (shift)
+  no ShiftScheduling._assignees (shift) has (user)
+then
+  RequestBoundary.respond (error: "NOT_ON_SHIFT", requestId)
+```
+
+### Covers.Request:on-shift#2
+
+Authored path: `Covers.Request`.
+- Covered by [Covers](../design/compositions/Covers.md), line 13.
+- Covered by [Covers](../design/compositions/Covers.md), line 20.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Request
+where
+  earlier, RequestBoundary.request (path: "/covers/request", requestId, session, shift)
+  ShiftScheduling._assignees (shift) has (user)
+then
+  ShiftTrading.requestCover (requester: user, shift)
+```
+
+### Covers.Request:on-shift#3
+
+Authored path: `Covers.Request`.
+- Covered by [Covers](../design/compositions/Covers.md), line 13.
+- Covered by [Covers](../design/compositions/Covers.md), line 20.
+
+```reaction
+when ShiftTrading.requestCover (requester: user, shift, request), asked by Covers.Request:on-shift#2
+where
+  earlier, RequestBoundary.request (path: "/covers/request", requestId, session, shift)
+then
+  RequestBoundary.respond (request, requestId)
+```
+
+### Covers.Withdraw
+
+Authored path: `Covers.Withdraw`.
+- Covered by [Covers](../design/compositions/Covers.md), line 17.
+- Covered by [Covers](../design/compositions/Covers.md), line 22.
+
+```reaction
+when RequestBoundary.request (path: "/covers/withdraw", request, requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Covers.Withdraw:no-request#2
+
+Authored path: `Covers.Withdraw`.
+- Covered by [Covers](../design/compositions/Covers.md), line 17.
+- Covered by [Covers](../design/compositions/Covers.md), line 22.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Withdraw
+where
+  earlier, RequestBoundary.request (path: "/covers/withdraw", request, requestId, session)
+  no ShiftTrading._request (request)
+then
+  RequestBoundary.respond (error: "NO_SUCH_REQUEST", requestId)
+```
+
+### Covers.Withdraw:not-requester#2
+
+Authored path: `Covers.Withdraw`.
+- Covered by [Covers](../design/compositions/Covers.md), line 17.
+- Covered by [Covers](../design/compositions/Covers.md), line 22.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Withdraw
+where
+  earlier, RequestBoundary.request (path: "/covers/withdraw", request, requestId, session)
+  ShiftTrading._request (request)
+  no ShiftTrading._request (request) has (requester: user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Covers.Withdraw:requester#2
+
+Authored path: `Covers.Withdraw`.
+- Covered by [Covers](../design/compositions/Covers.md), line 17.
+- Covered by [Covers](../design/compositions/Covers.md), line 22.
+
+```reaction
+when Sessioning.current (session, user), asked by Covers.Withdraw
+where
+  earlier, RequestBoundary.request (path: "/covers/withdraw", request, requestId, session)
+  ShiftTrading._request (request) has (requester: user)
+then
+  ShiftTrading.withdraw (request)
+```
+
+### Covers.Withdraw:requester#3
+
+Authored path: `Covers.Withdraw`.
+- Covered by [Covers](../design/compositions/Covers.md), line 17.
+- Covered by [Covers](../design/compositions/Covers.md), line 22.
+
+```reaction
+when ShiftTrading.withdraw (request), asked by Covers.Withdraw:requester#2
+where
+  earlier, RequestBoundary.request (path: "/covers/withdraw", request, requestId, session)
+then
+  RequestBoundary.respond (request, requestId)
 ```
 
 ### DeliverFaultToAsker
@@ -2052,6 +2666,12 @@ not listed here have no explicit input contract.
 - `/classes/invite` — requires `session`, `group`, `username`, `role`
 - `/classes/mine` — requires `session`
 - `/classes/roster` — requires `session`, `group`
+- `/covers/approve` — requires `session`, `request`
+- `/covers/claim` — requires `session`, `request`
+- `/covers/deny` — requires `session`, `request`
+- `/covers/request` — requires `session`, `shift`
+- `/covers/week` — requires `session`, `week`
+- `/covers/withdraw` — requires `session`, `request`
 - `/invites/accept` — requires `session`, `invite`
 - `/invites/mine` — requires `session`
 - `/schedule/shifts/assign` — requires `session`, `shift`, `member`

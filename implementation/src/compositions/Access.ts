@@ -35,9 +35,24 @@ export const MayViewAllAttendance = view("(user) may view everyone's attendance 
     ),
 ).holds();
 
+// TAs and staff approve or deny cover requests
+export const MayApproveRequests = view("(user) may approve cover requests in (group)", ({ user, group }, _outputs, { role }) =>
+    where(
+        RoleBasedAccessing._role({ group, user }).is({ role }),
+        is.among(role, ["TA", "STAFF"]),
+    ),
+).holds();
+
 // only staff invite people
 export const MayManageMembers = view("(user) may manage the members of (group)", ({ user, group }, _outputs, _bindings) =>
     where(RoleBasedAccessing._role({ group, user }).is({ role: "STAFF" })),
 ).holds();
 
-export const composition = { IsMember, MayEditSchedule, MayMarkAttendance, MayViewAllAttendance, MayManageMembers };
+export const composition = {
+    IsMember,
+    MayEditSchedule,
+    MayMarkAttendance,
+    MayViewAllAttendance,
+    MayApproveRequests,
+    MayManageMembers,
+};
