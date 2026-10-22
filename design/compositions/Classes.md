@@ -41,6 +41,19 @@ is. Anyone else is refused as not allowed.
 Classes.ClassRoster at /classes/roster
 ```
 
+## Pending invites
+
+A user who may manage a class's members can
+[see its pending invites](reaction:Classes.Invites), shown as
+[each invite with the invitee's username and offered role](former:Classes.PendingInvites),
+and [withdraw one](reaction:Classes.WithdrawInvite), which must be an invite to that
+class. Anyone else is refused as not allowed.
+
+```endpoints
+Classes.Invites at /classes/invites
+Classes.WithdrawInvite at /classes/withdraw-invite
+```
+
 ## Deleting a class
 
 Only the user who [owns the class](view:Access.IsOwner) can

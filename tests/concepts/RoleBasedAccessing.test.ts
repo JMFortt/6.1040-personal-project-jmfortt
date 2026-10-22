@@ -89,6 +89,35 @@ describe("RoleBasedAccessing", () => {
         await expect(rba.accept({ invite, user: "ari" })).rejects.toThrow(InviteNotFound);
     });
 
+    test("a group's pending invites can be listed and withdrawn", async () => {
+        const group = await newGroup();
+        const { invite: first } = await rba.invite({ group, user: "ari", role: "helper" });
+        const { invite: second } = await rba.invite({ group, user: "bea", role: "lead" });
+        const listed = await rba._invitesForGroup({ group });
+        expect(listed).toHaveLength(2);
+        expect(listed).toEqual(
+            expect.arrayContaining([
+                { invite: first, invitee: "ari", role: "helper" },
+                { invite: second, invitee: "bea", role: "lead" },
+            ]),
+        );
+
+        await rba.withdrawInvite({ invite: first });
+        expect(await rba._invitesForGroup({ group })).toEqual([{ invite: second, invitee: "bea", role: "lead" }]);
+        expect(await rba._invitesForUser({ user: "ari" })).toEqual([]);
+        // a withdrawn invite can't be accepted, and the user can be invited again
+        await expect(rba.accept({ invite: first, user: "ari" })).rejects.toThrow(InviteNotFound);
+        await rba.invite({ group, user: "ari", role: "lead" });
+    });
+
+    test("withdrawing an unknown invite is refused and changes nothing", async () => {
+        const group = await newGroup();
+        const { invite } = await rba.invite({ group, user: "ari", role: "helper" });
+        await expect(rba.withdrawInvite({ invite: "nope" })).rejects.toThrow(InviteNotFound);
+        expect(await rba._invitesForGroup({ group })).toEqual([{ invite, invitee: "ari", role: "helper" }]);
+        expect(await rba._invitesForGroup({ group: "unknown" })).toEqual([]);
+    });
+
     test("deleting a group removes it with its memberships and invites", async () => {
         const group = await newGroup();
         const { invite } = await rba.invite({ group, user: "ari", role: "helper" });

@@ -1,6 +1,5 @@
 import { defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
-import { client, errorMessage, loggedOutBy, savedSession, saveSession, SESSION_EXPIRED, UNREACHABLE } from "./api.ts";
-import type { ClassRow } from "./ClassPage.ts";
+import { client, errorMessage, loggedOutBy, savedSession, saveSession, SESSION_EXPIRED, UNREACHABLE, type ClassRow } from "./api.ts";
 import { usePolling } from "./polling.ts";
 
 interface InviteRow {
@@ -117,41 +116,46 @@ export const ClassesPage = defineComponent({
         };
     },
     template: `
-        <div class="buttons">
+        <div class="section-head">
+            <h1>My classes</h1>
             <button :disabled="loading" @click="load">Refresh</button>
         </div>
         <p v-if="loadError" class="error">{{ loadError }}</p>
 
-        <template v-if="invites.length > 0">
+        <section v-if="invites.length > 0" class="card">
             <h2>Your invites</h2>
             <ul>
                 <li v-for="i in invites" :key="i.invite">
-                    {{ i.name }} — invited as {{ i.role }}
-                    <button :disabled="accepting" @click="accept(i.invite)">Accept</button>
+                    {{ i.name }} <span class="badge role">{{ i.role }}</span>
+                    <button class="primary" :disabled="accepting" @click="accept(i.invite)">Accept</button>
                 </li>
             </ul>
             <p v-if="acceptError" class="error">{{ acceptError }}</p>
-        </template>
+        </section>
 
-        <h2>Your classes</h2>
-        <p v-if="loading">Loading…</p>
-        <p v-else-if="classes.length === 0">You're not in any classes yet.</p>
-        <ul v-else>
-            <li v-for="c in classes" :key="c.group">
-                <button class="link" @click="open(c)">{{ c.name }}</button> — {{ c.role }}
-            </li>
-        </ul>
+        <section class="card">
+            <h2>Your classes</h2>
+            <p v-if="loading" class="muted">Loading…</p>
+            <p v-else-if="classes.length === 0" class="muted">You're not in any classes yet. Create one below, or ask for an invite.</p>
+            <ul v-else>
+                <li v-for="c in classes" :key="c.group">
+                    <button class="link" @click="open(c)">{{ c.name }}</button> <span class="badge role">{{ c.role }}</span>
+                </li>
+            </ul>
+        </section>
 
-        <h2>New class</h2>
-        <form @submit.prevent="create">
-            <label>
-                Class name
-                <input v-model="newName" />
-            </label>
-            <div class="buttons">
-                <button type="submit" :disabled="creating">Create</button>
-            </div>
+        <section class="card">
+            <h2>New class</h2>
+            <form class="inline-form" @submit.prevent="create">
+                <label>
+                    Class name
+                    <input v-model="newName" placeholder="e.g. 6.1040" />
+                </label>
+                <div class="buttons">
+                    <button type="submit" class="primary" :disabled="creating">Create class</button>
+                </div>
+            </form>
             <p v-if="createError" class="error">{{ createError }}</p>
-        </form>
+        </section>
     `,
 });

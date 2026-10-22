@@ -70,6 +70,36 @@ describe("Covers", () => {
         expect(template[0].assignees).toEqual([{ user: la1.user, username: "journey-la1" }]);
     });
 
+    test("a class's requests can be listed across all its weeks, in shift order, by members only", async () => {
+        const { group, shift, ta, la1, la2 } = await classWithShift("all");
+        // a second, earlier week with LA 1 on its shift too
+        const { week: earlier } = await post("/schedule/weeks/publish", {
+            session: ta.session,
+            group,
+            start: "2026-10-12T00:00:00.000Z",
+            name: "Earlier",
+        });
+        const earlierShift = (await post("/schedule/week", { session: ta.session, week: earlier })).week.shifts[0].shift;
+        const { request: later } = await post("/covers/request", { session: la1.session, shift });
+        const { request: first } = await post("/covers/request", { session: la1.session, shift: earlierShift });
+
+        const { requests } = await post("/covers/class", { session: la2.session, group });
+        expect(requests.map((r: { request: string }) => r.request)).toEqual([first, later]);
+        expect(requests[0]).toEqual({
+            request: first,
+            week: earlier,
+            shift: earlierShift,
+            start: "2026-10-12T15:00:00.000Z",
+            end: "2026-10-12T17:00:00.000Z",
+            requester: la1.user,
+            claimer: null,
+            status: "OPEN",
+        });
+
+        const outsider = await register("all-outsider");
+        expect(await post("/covers/class", { session: outsider.session, group })).toEqual({ error: "FORBIDDEN" });
+    });
+
     test("approval is refused if the schedule changed since the claim, and the request stays claimed", async () => {
         const { week, shift, ta, la1, la2 } = await classWithShift("changed");
         const { request } = await post("/covers/request", { session: la1.session, shift });

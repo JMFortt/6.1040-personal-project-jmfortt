@@ -163,6 +163,37 @@ describe("Managing members and leaving", () => {
         expect((await post("/classes/roster", { session: la.session, group })).owner).toBe(owner.user);
     });
 
+    test("staff see a class's pending invites with usernames, and can withdraw one", async () => {
+        const { group, owner, la } = await classWithLA("pending");
+        const bea = await register("pending-bea");
+        const { invite } = await post("/classes/invite", { session: owner.session, group, username: "pending-bea", role: "TA" });
+
+        expect(await post("/classes/invites", { session: owner.session, group })).toEqual({
+            invites: [{ invite, user: bea.user, username: "pending-bea", role: "TA" }],
+        });
+        // only staff can see or withdraw them
+        expect(await post("/classes/invites", { session: la.session, group })).toEqual({ error: "FORBIDDEN" });
+        expect(await post("/classes/withdraw-invite", { session: la.session, group, invite })).toEqual({ error: "FORBIDDEN" });
+
+        expect(await post("/classes/withdraw-invite", { session: owner.session, group, invite })).toEqual({ invite });
+        expect(await post("/classes/invites", { session: owner.session, group })).toEqual({ invites: [] });
+        expect(await post("/invites/mine", { session: bea.session })).toEqual({ invites: [] });
+        expect(await post("/invites/accept", { session: bea.session, invite })).toEqual({ error: "NOT_FOUND" });
+        expect(await post("/classes/withdraw-invite", { session: owner.session, group, invite })).toEqual({ error: "NOT_FOUND" });
+    });
+
+    test("staff of one class can't withdraw another class's invite", async () => {
+        const { group: mine, owner } = await classWithLA("own");
+        const { group: theirs, owner: otherOwner } = await classWithLA("theirs");
+        await register("theirs-bea");
+        const { invite } = await post("/classes/invite", { session: otherOwner.session, group: theirs, username: "theirs-bea", role: "LA" });
+
+        // passing their own class's id doesn't let them reach the other class's invite
+        expect(await post("/classes/withdraw-invite", { session: owner.session, group: mine, invite })).toEqual({ error: "NOT_FOUND" });
+        expect(await post("/classes/withdraw-invite", { session: owner.session, group: theirs, invite })).toEqual({ error: "FORBIDDEN" });
+        expect((await post("/classes/invites", { session: otherOwner.session, group: theirs })).invites).toHaveLength(1);
+    });
+
     test("staff can change roles, and the new role's permissions apply", async () => {
         const { group, owner, la } = await classWithLA("role");
         const SLOT = { group, weekday: "MONDAY", startMinute: 900, endMinute: 1020, capacity: 1 };

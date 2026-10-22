@@ -79,6 +79,15 @@ changeRole(group: Group, user: User, role: Role) : returns ()
   then
     refuses CANNOT_CHANGE_OWNER_ROLE "The owner's role cannot be changed."
 
+withdrawInvite(invite: Invite) : returns ()
+  where invite exists
+  then
+    remove invite
+    returns
+  where invite does not exist
+  then
+    refuses INVITE_NOT_FOUND "There is no such invite."
+
 deleteGroup(group: Group) : returns ()
   where group exists
   then
@@ -115,6 +124,9 @@ _members(group: Group) : many (user: User, role: Role)
 
 _invitesForUser(user: User) : many (invite: Invite, group: Group, role: Role)
   Returns every pending invite for user, ordered by invite, and no rows if there are none.
+
+_invitesForGroup(group: Group) : many (invite: Invite, invitee: User, role: Role)
+  Returns every pending invite to group, ordered by invite, and no rows if there are none or the group does not exist.
 
 _role(group: Group, user: User) : optional (role: Role)
   Returns user's role in group, or no row if user is not a member or the group does not exist.

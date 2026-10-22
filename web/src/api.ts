@@ -5,6 +5,13 @@ import type { TAbleWireHttp } from "../../generated/wire.ts";
 // typed client generated from the backend's endpoints
 export const client = createHttpClient<TAbleWireHttp>({ baseUrl: "/api" });
 
+// a class you're in, and your role in it
+export interface ClassRow {
+    group: string;
+    name: string;
+    role: string;
+}
+
 export const UNREACHABLE = "Can't reach the server. Try again in a moment.";
 export const SESSION_EXPIRED = "You've been logged out. Please log in again.";
 

@@ -159,6 +159,21 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "ALREADY_IN_GROUP" | "GROUP_NOT_FOUND" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_USER" };
   };
+  "/classes/invites": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "invites": {
+        "invite": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>>>, ["invite"]>>;
+        "role": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>>>, ["role"]>>;
+        "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>>>, ["invitee"]>]>>;
+        "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+      }[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
+  };
   "/classes/leave": {
     input: {
       "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["group"]>>;
@@ -208,6 +223,17 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
   };
+  "/classes/withdraw-invite": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
+      "invite": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["withdrawInvite"]>[0], ["invite"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>>>, ["invite"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "invite": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["withdrawInvite"]>[0], ["invite"]>>;
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "INVITE_NOT_FOUND" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_INVITE" };
+  };
   "/covers/approve": {
     input: {
       "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["approve"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>]>>;
@@ -227,6 +253,25 @@ export type TAbleWire = {
       "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["claim"]>[0], ["request"]>>;
     };
     error: { error: AppWideError | "ALREADY_ON_SHIFT" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NOT_OPEN" | "NO_SUCH_REQUEST" | "NO_SUCH_SHIFT" | "OWN_REQUEST" | "REQUEST_NOT_FOUND" };
+  };
+  "/covers/class": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "requests": {
+        "claimer": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["claimer"]>>;
+        "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+        "request": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["request"]>>;
+        "requester": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["requester"]>>;
+        "shift": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>[0], ["shift"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["status"]>>;
+        "week": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>[0], ["week"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>>>, ["week"]>]>>;
+      }[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
   };
   "/covers/deny": {
     input: {
@@ -632,6 +677,21 @@ export type TAbleWireHttp = {
     };
     error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
   };
+  "/classes/invites": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "invites": {
+        "invite": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>>>, ["invite"]>>;
+        "role": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>>>, ["role"]>>;
+        "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>>>, ["invitee"]>]>>;
+        "username": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["UserAuthenticating"]["_username"]>>>, ["username"]>>;
+      }[];
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
   "/classes/leave": {
     input: {
       "group": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["removeMember"]>[0], ["group"]>>;
@@ -681,6 +741,17 @@ export type TAbleWireHttp = {
     };
     error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
   };
+  "/classes/withdraw-invite": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>]>>;
+      "invite": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["withdrawInvite"]>[0], ["invite"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_invitesForGroup"]>>>, ["invite"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "invite": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["withdrawInvite"]>[0], ["invite"]>>;
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
   "/covers/approve": {
     input: {
       "request": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["approve"]>[0], ["request"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_request"]>[0], ["request"]>]>>;
@@ -700,6 +771,25 @@ export type TAbleWireHttp = {
       "request": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["claim"]>[0], ["request"]>>;
     };
     error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/covers/class": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "requests": {
+        "claimer": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["claimer"]>>;
+        "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+        "request": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["request"]>>;
+        "requester": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["requester"]>>;
+        "shift": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>[0], ["shift"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["status"]>>;
+        "week": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>[0], ["week"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>>>, ["week"]>]>>;
+      }[];
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
   };
   "/covers/deny": {
     input: {

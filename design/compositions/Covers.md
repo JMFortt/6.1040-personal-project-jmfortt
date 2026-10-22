@@ -46,3 +46,10 @@ shown as [each request with its shift, requester, claimer, and status](former:Co
 ```endpoints
 Covers.ForWeek at /covers/week
 ```
+
+A member can also [see all of a class's cover requests](reaction:Covers.ForClass),
+shown as [each request across every published week, in order of its shift](former:Covers.ClassRequests).
+
+```endpoints
+Covers.ForClass at /covers/class
+```

@@ -191,7 +191,53 @@ const Delete = endpoint(
     { input: { required: ["session", "group"] }, validators: { input: idsInput("group") } },
 );
 
+// --- pending invites (STAFF) ---
+
+// a class's invites that haven't been accepted yet, with the invitee's username
+const PendingInvites = former("the pending invites of (group)", ({ group }, { invite, invitee, username, role }) =>
+    each(RoleBasedAccessing._invitesForGroup({ group }).is({ invite, invitee, role }))
+        .where(UserAuthenticating._username({ user: invitee }).is({ username }))
+        .form({ invite, user: invitee, username, role }),
+);
+
+const Invites = endpoint(
+    "/classes/invites",
+    ({ session, group, user }) =>
+        receive({ session, group })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(MayManageMembers({ user, group }))
+                    .then(respond({ invites: PendingInvites({ group }) }))
+                    .named("allowed"),
+                where(no(MayManageMembers({ user, group }))).then(respond({ error: "NOT_ALLOWED" })).named("not-allowed"),
+            ),
+    { input: { required: ["session", "group"] }, validators: { input: idsInput("group") } },
+);
+
+// the invite must belong to the class the caller manages, so staff of one class can't withdraw
+// another class's invites
+const WithdrawInvite = endpoint(
+    "/classes/withdraw-invite",
+    ({ session, group, invite, user }) =>
+        receive({ session, group, invite })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(MayManageMembers({ user, group }), RoleBasedAccessing._invitesForGroup({ group }).is({ invite }))
+                    .then(RoleBasedAccessing.withdrawInvite({ invite }).responds({}))
+                    .then(respond({ invite }))
+                    .named("allowed"),
+                where(no(MayManageMembers({ user, group }))).then(respond({ error: "NOT_ALLOWED" })).named("not-allowed"),
+                where(MayManageMembers({ user, group }), no(RoleBasedAccessing._invitesForGroup({ group }).is({ invite })))
+                    .then(respond({ error: "NO_SUCH_INVITE" }))
+                    .named("no-invite"),
+            ),
+    { input: { required: ["session", "group", "invite"] }, validators: { input: idsInput("group", "invite") } },
+);
+
 export const composition = {
+    PendingInvites,
+    Invites,
+    WithdrawInvite,
     Delete,
     RemoveFromSchedule,
     WithdrawCoverRequests,

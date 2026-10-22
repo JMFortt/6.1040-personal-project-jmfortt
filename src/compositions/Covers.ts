@@ -30,6 +30,19 @@ const WeekRequests = former(
             .form({ request, shift, start, end, requester, claimer, status }),
 );
 
+// every request in a class, across all its published weeks, in shift order
+const ClassRequests = former(
+    "the cover requests in (group)",
+    ({ group }, { week, shift, start, end, request, requester, claimer, status }) =>
+        each(ShiftScheduling._weeks({ context: group }).is({ week }))
+            .where(
+                ShiftScheduling._shiftsInWeek({ week }).is({ shift, start, end }),
+                ShiftTrading._requestsForShift({ shift }).is({ request, requester, claimer, status }),
+            )
+            .arranged(start)
+            .form({ request, week, shift, start, end, requester, claimer, status }),
+);
+
 // --- endpoints ---
 
 // anyone on a shift can ask for a cover
@@ -219,4 +232,16 @@ const ForWeek = endpoint(
     { input: { required: ["session", "week"] }, validators: { input: idsInput("week") } },
 );
 
-export const composition = { ApplyCover, WeekRequests, Request, Claim, Approve, Deny, Withdraw, ForWeek };
+const ForClass = endpoint(
+    "/covers/class",
+    ({ session, group, user }) =>
+        receive({ session, group })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(IsMember({ user, group })).then(respond({ requests: ClassRequests({ group }) })).named("member"),
+                where(no(IsMember({ user, group }))).then(respond({ error: "NOT_ALLOWED" })).named("not-member"),
+            ),
+    { input: { required: ["session", "group"] }, validators: { input: idsInput("group") } },
+);
+
+export const composition = { ApplyCover, WeekRequests, ClassRequests, ForClass, Request, Claim, Approve, Deny, Withdraw, ForWeek };

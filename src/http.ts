@@ -40,6 +40,7 @@ export const policy = httpPolicy({
         NOT_IN_CLASS: "INVALID_REQUEST",
         NOT_ON_SHIFT: "INVALID_REQUEST",
         NO_SUCH_REQUEST: "NOT_FOUND",
+        NO_SUCH_INVITE: "NOT_FOUND",
         ALREADY_ON_SHIFT: "CONFLICT",
         CANNOT_APPLY: "CONFLICT",
     },

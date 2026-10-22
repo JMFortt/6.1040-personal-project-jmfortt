@@ -52,8 +52,9 @@ export const LoginPage = defineComponent({
         return { username, password, error, busy, submit };
     },
     template: `
-        <form @submit.prevent="submit('login')">
-            <h1>TAble</h1>
+        <form class="card login" @submit.prevent="submit('login')">
+            <h1><span class="logo">TA</span> TAble</h1>
+            <p class="muted">Shift scheduling, covers, and attendance for course staff.</p>
             <label>
                 Username
                 <input v-model="username" autocomplete="username" />
@@ -63,7 +64,7 @@ export const LoginPage = defineComponent({
                 <input v-model="password" type="password" autocomplete="current-password" />
             </label>
             <div class="buttons">
-                <button type="submit" :disabled="busy">Log in</button>
+                <button type="submit" class="primary" :disabled="busy">Log in</button>
                 <button type="button" :disabled="busy" @click="submit('register')">Register</button>
             </div>
             <p v-if="error" class="error">{{ error }}</p>

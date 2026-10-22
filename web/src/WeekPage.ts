@@ -278,7 +278,7 @@ export const WeekPage = defineComponent({
     },
     template: `
         <div class="buttons">
-            <button @click="$emit('back')">← Back to class</button>
+            <button @click="$emit('back')">← Back to schedule</button>
             <button :disabled="loading" @click="load">Refresh</button>
         </div>
         <p v-if="loading">Loading…</p>

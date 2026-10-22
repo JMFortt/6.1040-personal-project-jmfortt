@@ -100,6 +100,14 @@ export class RoleBasedAccessingConcept {
         return {};
     }
 
+    async withdrawInvite({ invite }: { invite: string }) {
+        const result = await this.invites.deleteOne({ _id: invite });
+        if (result.deletedCount === 0) {
+            throw new InviteNotFound("There is no such invite.");
+        }
+        return {};
+    }
+
     // memberships and invites go first, so if this stops partway, what's left is a group nobody is
     // in (which no one can see) rather than members of a group that doesn't exist
     async deleteGroup({ group }: { group: string }) {
@@ -151,6 +159,11 @@ export class RoleBasedAccessingConcept {
     async _invitesForUser({ user }: { user: string }) {
         const rows = await this.invites.find({ invitee: user }).sort({ _id: 1 }).toArray();
         return rows.map(({ _id, group, role }) => ({ invite: _id, group, role }));
+    }
+
+    async _invitesForGroup({ group }: { group: string }) {
+        const rows = await this.invites.find({ group }).sort({ _id: 1 }).toArray();
+        return rows.map(({ _id, invitee, role }) => ({ invite: _id, invitee, role }));
     }
 
     async _role({ group, user }: { group: string; user: string }) {
