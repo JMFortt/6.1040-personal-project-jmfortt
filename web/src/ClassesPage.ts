@@ -1,6 +1,7 @@
 import { defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, errorMessage, loggedOutBy, savedSession, saveSession, SESSION_EXPIRED, UNREACHABLE } from "./api.ts";
 import type { ClassRow } from "./ClassPage.ts";
+import { usePolling } from "./polling.ts";
 
 interface InviteRow {
     invite: string;
@@ -108,6 +109,7 @@ export const ClassesPage = defineComponent({
         }
 
         onMounted(load);
+        usePolling(load);
 
         return {
             classes, invites, loading, loadError, acceptError, accepting,

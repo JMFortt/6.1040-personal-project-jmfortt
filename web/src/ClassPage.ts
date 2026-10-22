@@ -1,5 +1,6 @@
 import { computed, defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, errorMessage, loggedOutBy, makePerform, savedSession, saveSession, SCHEDULE_MESSAGES, SESSION_EXPIRED, UNREACHABLE } from "./api.ts";
+import { usePolling } from "./polling.ts";
 import { ScheduleBoard, type Block, type Person } from "./ScheduleBoard.ts";
 import { dateLabel, hoursLabel, mondayOf, WEEKDAYS, type Weekday } from "./time.ts";
 
@@ -261,6 +262,7 @@ export const ClassPage = defineComponent({
         }
 
         onMounted(load);
+        usePolling(load);
 
         return {
             myRole, owner, memberError, memberBusy, changeRole, removeMember, leave, deleteClass,

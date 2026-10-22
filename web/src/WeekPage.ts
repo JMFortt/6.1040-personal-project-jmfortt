@@ -1,5 +1,6 @@
 import { computed, defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, errorMessage, loggedOutBy, makePerform, savedSession, saveSession, SCHEDULE_MESSAGES, SESSION_EXPIRED, UNREACHABLE } from "./api.ts";
+import { usePolling } from "./polling.ts";
 import { ScheduleBoard, type Block, type Person } from "./ScheduleBoard.ts";
 import { dateLabel, dayAndHours, hoursLabel, timeIn, weekDayLabels } from "./time.ts";
 
@@ -264,6 +265,7 @@ export const WeekPage = defineComponent({
         }
 
         onMounted(load);
+        usePolling(load);
 
         return {
             covers, coverError, coverBusy, nameOf, isOn, myActiveRequest, canClaim, hoursLabel,
