@@ -261,6 +261,9 @@ export type TAbleWire = {
     };
     output: {
       "requests": {
+        "assignees": {
+          "user": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>>;
+        }[];
         "claimer": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["claimer"]>>;
         "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
         "request": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["request"]>>;
@@ -779,6 +782,9 @@ export type TAbleWireHttp = {
     };
     output: {
       "requests": {
+        "assignees": {
+          "user": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>>;
+        }[];
         "claimer": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["claimer"]>>;
         "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
         "request": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftTrading"]["_requestsForShift"]>>>, ["request"]>>;

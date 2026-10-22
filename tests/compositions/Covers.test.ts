@@ -94,6 +94,7 @@ describe("Covers", () => {
             requester: la1.user,
             claimer: null,
             status: "OPEN",
+            assignees: [{ user: la1.user }],
         });
 
         const outsider = await register("all-outsider");

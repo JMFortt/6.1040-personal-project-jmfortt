@@ -25,4 +25,6 @@ The tests use Bun and a local DB.
 
 Each test file uses its own database (named `test_…`), which it empties before each test and drops when it finishes, so the tests never touch the app data. Concept tests are in `tests/concepts/`; tests of the full API (endpoints, permissions, and reactions) are in `tests/compositions/`.
 
+<!-- to generate test file: cmd /c "bun run test > tests\output.txt 2>&1" -->
+
 The output of the latest run is saved in [tests/output.txt](tests/output.txt).

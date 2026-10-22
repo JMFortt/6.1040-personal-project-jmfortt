@@ -30,17 +30,28 @@ const WeekRequests = former(
             .form({ request, shift, start, end, requester, claimer, status }),
 );
 
-// every request in a class, across all its published weeks, in shift order
+// every request in a class, across all its published weeks, in shift order, with who's on each
+// shift now (so the page only offers Claim to people who aren't already on it)
 const ClassRequests = former(
     "the cover requests in (group)",
-    ({ group }, { week, shift, start, end, request, requester, claimer, status }) =>
+    ({ group }, { week, shift, start, end, request, requester, claimer, status, assignee }) =>
         each(ShiftScheduling._weeks({ context: group }).is({ week }))
             .where(
                 ShiftScheduling._shiftsInWeek({ week }).is({ shift, start, end }),
                 ShiftTrading._requestsForShift({ shift }).is({ request, requester, claimer, status }),
             )
             .arranged(start)
-            .form({ request, week, shift, start, end, requester, claimer, status }),
+            .form({
+                request,
+                week,
+                shift,
+                start,
+                end,
+                requester,
+                claimer,
+                status,
+                assignees: each(ShiftScheduling._assignees({ shift }).is({ user: assignee })).form({ user: assignee }),
+            }),
 );
 
 // --- endpoints ---

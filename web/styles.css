@@ -740,6 +740,80 @@ button.on-dark:hover:not(:disabled) {
     color: var(--muted);
 }
 
+/* ===== cover requests board: open → claimed → resolved ===== */
+
+/* a card that stands out, e.g. "Covers you can claim" */
+.card.highlight {
+    border-color: var(--icy-aqua);
+    border-left: 4px solid var(--coral);
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space);
+    align-items: start;
+}
+
+.column {
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    background: #f5f1ee;
+}
+
+.column h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+    font-size: var(--size-subheading);
+}
+
+.count {
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.column-note {
+    margin-bottom: 0.5rem;
+}
+
+.cover-card {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--coral);
+    border-radius: var(--radius-small);
+    background: var(--surface);
+    font-size: var(--size-small);
+}
+
+.cover-card p {
+    margin-bottom: 0.25rem;
+}
+
+.cover-card .buttons {
+    margin-top: 0.5rem;
+}
+
+.cover-card.claimed {
+    border-left-color: var(--baltic-blue);
+}
+
+.cover-card.resolved {
+    border-left-color: var(--border);
+}
+
+@media (max-width: 48rem) {
+    .board {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* a list of rows that each have text, a badge, and buttons */
 .plain-list {
     list-style: none;

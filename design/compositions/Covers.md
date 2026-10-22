@@ -48,7 +48,7 @@ Covers.ForWeek at /covers/week
 ```
 
 A member can also [see all of a class's cover requests](reaction:Covers.ForClass),
-shown as [each request across every published week, in order of its shift](former:Covers.ClassRequests).
+shown as [each request across every published week, in order of its shift, with who is on that shift now](former:Covers.ClassRequests).
 
 ```endpoints
 Covers.ForClass at /covers/class

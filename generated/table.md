@@ -387,12 +387,15 @@ Authored path: `Covers.ClassRequests`.
 - Covered by [Covers](../design/compositions/Covers.md), line 51.
 
 ```former
-Former "the cover requests in (group)" — inputs (group); bindings (week, shift, start, end, request, requester, claimer, status); promises exactly one record — forms:
+Former "the cover requests in (group)" — inputs (group); bindings (week, shift, start, end, request, requester, claimer, status, assignee); promises exactly one record — forms:
   each ShiftScheduling._weeks (context: group) has (week)
     where ShiftScheduling._shiftsInWeek (week) has (end, shift, start)
     where ShiftTrading._requestsForShift (shift) has (claimer, request, requester, status)
     arranged by start
     form a record of
+      assignees: each ShiftScheduling._assignees (shift) has (user: assignee)
+        form a record of
+          user: assignee
       claimer
       end
       request
