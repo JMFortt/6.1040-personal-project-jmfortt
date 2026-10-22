@@ -80,6 +80,10 @@ h4 {
     font-weight: 500;
 }
 
+h4 {
+    margin-top: 1rem;
+}
+
 p {
     margin: 0 0 0.5rem;
 }
@@ -566,14 +570,20 @@ button.on-dark:hover:not(:disabled) {
     background-image: linear-gradient(to bottom, var(--border) 1px, transparent 1px);
 }
 
+/* a slot or shift: its time, then who's on it, then how full it is */
 .block {
     position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
     margin: 1px;
-    padding: 0.2rem 0.3rem;
+    padding: 0.25rem 0.35rem;
     overflow: hidden;
-    border: 1px solid var(--baltic-blue);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--baltic-blue);
     border-radius: var(--radius-small);
-    background: var(--baltic-blue-tint);
+    background: var(--surface);
     color: var(--ink);
     font: inherit;
     font-size: 0.75rem;
@@ -581,24 +591,180 @@ button.on-dark:hover:not(:disabled) {
 }
 
 .block:hover:not(:disabled) {
-    background: var(--baltic-blue-tint);
-    filter: brightness(0.97);
+    background: var(--surface);
+    box-shadow: 0 2px 6px rgba(36, 33, 43, 0.12);
+}
+
+.block-time {
+    font-weight: 500;
+}
+
+.block-count {
+    margin-top: auto;
+    color: var(--muted);
 }
 
 /* shifts you're on */
-.block.mine {
+.block.mine,
+.block.mine:hover:not(:disabled) {
     background: var(--icy-aqua);
 }
 
-.block.full {
-    border-width: 2px;
+.block.full .block-count {
+    color: var(--success);
+    font-weight: 500;
 }
 
 /* for LAs: shifts they aren't on */
-.block.other {
+.block.other,
+.block.other:hover:not(:disabled) {
     background: #f1efed;
-    border-color: #cfc9c4;
+    border-color: #ddd6d0;
+    border-left-color: #cfc9c4;
     color: var(--muted);
+}
+
+.block.other .chip {
+    opacity: 0.6;
+}
+
+/* ===== people chips, colored by role ===== */
+
+.chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.6;
+    background: #efedeb;
+    color: var(--ink);
+}
+
+.chip.role-la {
+    background: var(--coral-tint);
+}
+
+.chip.role-ta {
+    background: var(--baltic-blue-tint);
+    color: var(--baltic-blue-dark);
+}
+
+.chip.role-staff {
+    background: var(--mauve-tint);
+    color: var(--mauve);
+}
+
+/* the × to unassign someone, inside their chip */
+.chip-remove,
+.chip-remove:hover:not(:disabled) {
+    padding: 0 0.15rem;
+    border: none;
+    background: none;
+    color: inherit;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    margin-top: 0.6rem;
+    font-size: var(--size-small);
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.swatch {
+    display: inline-block;
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+}
+
+.swatch.mine {
+    background: var(--icy-aqua);
+}
+
+/* ===== tabs: the master schedule, then each published week ===== */
+
+.tabs {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    margin-bottom: var(--space);
+    border-bottom: 1px solid var(--border);
+}
+
+.tab,
+.tab:hover:not(:disabled) {
+    padding: 0.5rem 0.9rem;
+    border: none;
+    border-bottom: 3px solid transparent;
+    border-radius: 0;
+    background: none;
+    color: var(--muted);
+    font-size: var(--size-body);
+    white-space: nowrap;
+}
+
+.tab:hover:not(:disabled) {
+    color: var(--ink);
+}
+
+/* the coral accent marks where you are */
+.tab.active {
+    border-bottom-color: var(--coral);
+    color: var(--ink);
+    font-weight: 500;
+}
+
+.tab-date {
+    margin-left: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+/* a list of rows that each have text, a badge, and buttons */
+.plain-list {
+    list-style: none;
+    padding: 0;
+}
+
+.plain-list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.plain-list li:last-child {
+    border-bottom: none;
+}
+
+.panel-actions {
+    margin-top: 0.75rem;
+}
+
+.mark-name {
+    min-width: 7rem;
 }
 
 .block.selected {

@@ -6,7 +6,6 @@ import { CoversSection } from "./CoversSection.ts";
 import { LoginPage } from "./LoginPage.ts";
 import { MembersSection } from "./MembersSection.ts";
 import { ScheduleSection } from "./ScheduleSection.ts";
-import { WeekPage } from "./WeekPage.ts";
 
 // the sections of a class, in sidebar order
 const SECTIONS = [
@@ -19,7 +18,7 @@ type Section = (typeof SECTIONS)[number]["id"];
 
 // the login page, or (once logged in) the app shell: a top bar, a sidebar, and the current page
 export const App = defineComponent({
-    components: { AttendanceSection, ClassesPage, CoversSection, LoginPage, MembersSection, ScheduleSection, WeekPage },
+    components: { AttendanceSection, ClassesPage, CoversSection, LoginPage, MembersSection, ScheduleSection },
     setup() {
         const username = ref<string | null>(null);
         // the logged-in user's id, so pages can tell which shifts are yours
@@ -28,10 +27,9 @@ export const App = defineComponent({
         // shown on the login page, e.g. when a session has expired
         const notice = ref("");
 
-        // where you are: the classes list, or a class's section, or (in Schedule) one published week
+        // where you are: the classes list, or one of a class's sections
         const openClass = ref<ClassRow | null>(null);
         const section = ref<Section>("schedule");
-        const openWeek = ref<string | null>(null);
 
         const logoutError = ref("");
         const loggingOut = ref(false);
@@ -97,27 +95,20 @@ export const App = defineComponent({
 
         function showClasses() {
             openClass.value = null;
-            openWeek.value = null;
         }
 
         function openClassPage(row: ClassRow) {
             openClass.value = row;
             section.value = "schedule";
-            openWeek.value = null;
         }
 
         function go(to: Section) {
             section.value = to;
-            openWeek.value = null;
-        }
-
-        function openWeekPage(week: string) {
-            openWeek.value = week;
         }
 
         return {
-            SECTIONS, username, me, initials, checking, notice, openClass, section, sectionLabel, openWeek,
-            logoutError, loggingOut, loggedIn, loggedOut, logout, showClasses, openClassPage, go, openWeekPage,
+            SECTIONS, username, me, initials, checking, notice, openClass, section, sectionLabel,
+            logoutError, loggingOut, loggedIn, loggedOut, logout, showClasses, openClassPage, go,
         };
     },
     template: `
@@ -162,26 +153,14 @@ export const App = defineComponent({
 
                 <main class="content">
                     <ClassesPage v-if="openClass === null" @open-class="openClassPage" @logged-out="loggedOut" />
-                    <template v-else-if="section === 'schedule'">
-                        <WeekPage
-                            v-if="openWeek !== null"
-                            :week="openWeek"
-                            :group="openClass.group"
-                            :role="openClass.role"
-                            :me="me"
-                            @back="openWeek = null"
-                            @logged-out="loggedOut"
-                        />
-                        <ScheduleSection
-                            v-else
-                            :group="openClass.group"
-                            :name="openClass.name"
-                            :role="openClass.role"
-                            :me="me"
-                            @open-week="openWeekPage"
-                            @logged-out="loggedOut"
-                        />
-                    </template>
+                    <ScheduleSection
+                        v-else-if="section === 'schedule'"
+                        :group="openClass.group"
+                        :name="openClass.name"
+                        :role="openClass.role"
+                        :me="me"
+                        @logged-out="loggedOut"
+                    />
                     <CoversSection v-else-if="section === 'covers'" :name="openClass.name" />
                     <AttendanceSection
                         v-else-if="section === 'attendance'"

@@ -6,6 +6,14 @@ export interface Person {
     username: string;
 }
 
+// a roster entry; the role colors each person's chip on the grid
+export interface Member extends Person {
+    role?: string;
+}
+
+// chip color per role, so who's on a shift reads at a glance
+const ROLE_CLASS: Record<string, string> = { LA: "role-la", TA: "role-ta", STAFF: "role-staff" };
+
 // one slot (template) or shift (published week), already placed in the week
 export interface Block {
     id: string;
@@ -16,7 +24,7 @@ export interface Block {
     assignees: Person[];
 }
 
-const ROW_PX = 40;
+const ROW_PX = 48;
 
 // A weekly grid (days across, hours down) of blocks. Clicking a block shows its details; TAs and
 // staff can assign, unassign, delete, and add. The board doesn't call the API itself: it tells the
@@ -24,7 +32,7 @@ const ROW_PX = 40;
 export const ScheduleBoard = defineComponent({
     props: {
         blocks: { type: Array as PropType<Block[]>, required: true },
-        roster: { type: Array as PropType<Person[]>, required: true },
+        roster: { type: Array as PropType<Member[]>, required: true },
         canEdit: { type: Boolean, default: false },
         dayLabels: { type: Array as PropType<string[]>, default: () => DAYS },
         addLabel: { type: String, default: "Add" },
@@ -45,8 +53,17 @@ export const ScheduleBoard = defineComponent({
             emit("select", selectedId.value);
         }
 
+        function isMine(b: Block) {
+            return b.assignees.some((a) => a.user === props.me);
+        }
+
         function isOther(b: Block) {
-            return props.greyOthers && !b.assignees.some((a) => a.user === props.me);
+            return props.greyOthers && !isMine(b);
+        }
+
+        function roleClass(user: string) {
+            const role = props.roster.find((m) => m.user === user)?.role ?? "";
+            return ROLE_CLASS[role] ?? "";
         }
 
         // show at least 9 AM-5 PM, stretched to fit every block
@@ -80,9 +97,9 @@ export const ScheduleBoard = defineComponent({
             };
         }
 
-        function summary(b: Block) {
-            const names = b.assignees.map((a) => a.username).join(", ") || "nobody";
-            return `${names} · ${b.assignees.length}/${b.capacity}`;
+        // the block's own time, e.g. "3–5 PM"
+        function hoursOf(b: Block) {
+            return `${hourLabel(b.startHour)}–${hourLabel(b.endHour)}`;
         }
 
         function timeRange(b: Block) {
@@ -125,7 +142,7 @@ export const ScheduleBoard = defineComponent({
         return {
             ROW_PX, DAYS, hours, columns, selected, selectedId, assignable, member,
             day, startHour, endHour, capacity, formError, hourOptions,
-            position, summary, timeRange, hourLabel, assign, add, toggle, isOther,
+            position, hoursOf, timeRange, hourLabel, assign, add, toggle, isMine, isOther, roleClass,
         };
     },
     template: `
@@ -144,35 +161,62 @@ export const ScheduleBoard = defineComponent({
                             class="block"
                             :class="{
                                 full: p.block.assignees.length >= p.block.capacity,
+                                mine: isMine(p.block),
                                 other: isOther(p.block),
                                 selected: p.block.id === selectedId,
                             }"
                             :style="position(p)"
+                            :aria-label="timeRange(p.block) + ', ' + p.block.assignees.length + ' of ' + p.block.capacity + ' filled'"
                             @click="toggle(p.block.id)"
-                        >{{ summary(p.block) }}</button>
+                        >
+                            <span class="block-time">{{ hoursOf(p.block) }}</span>
+                            <span class="chips">
+                                <span v-for="a in p.block.assignees" :key="a.user" class="chip" :class="roleClass(a.user)">{{ a.username }}</span>
+                            </span>
+                            <span class="block-count">
+                                {{ p.block.assignees.length }}/{{ p.block.capacity }}<template
+                                    v-if="p.block.assignees.length >= p.block.capacity"> ✓</template>
+                            </span>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="legend">
+            <span class="chip role-la">LA</span>
+            <span class="chip role-ta">TA</span>
+            <span class="chip role-staff">Staff</span>
+            <span class="legend-item"><span class="swatch mine"></span>Your shifts</span>
+            <span class="muted">Click a block for details.</span>
+        </div>
 
         <div v-if="selected" class="panel">
-            <strong>{{ timeRange(selected) }}</strong> · {{ selected.assignees.length }}/{{ selected.capacity }}
-            <ul>
-                <li v-for="a in selected.assignees" :key="a.user">
+            <div class="card-head">
+                <h3>{{ timeRange(selected) }}</h3>
+                <span class="muted">{{ selected.assignees.length }} of {{ selected.capacity }} filled</span>
+            </div>
+            <p v-if="selected.assignees.length === 0" class="muted">Nobody yet.</p>
+            <div v-else class="chips">
+                <span v-for="a in selected.assignees" :key="a.user" class="chip" :class="roleClass(a.user)">
                     {{ a.username }}
-                    <button v-if="canEdit" class="link" :disabled="busy" @click="$emit('unassign', selected.id, a.user)">× remove</button>
-                </li>
-                <li v-if="selected.assignees.length === 0">Nobody yet.</li>
-            </ul>
-            <div v-if="canEdit" class="buttons">
+                    <button
+                        v-if="canEdit"
+                        class="chip-remove"
+                        :disabled="busy"
+                        :aria-label="'Remove ' + a.username"
+                        @click="$emit('unassign', selected.id, a.user)"
+                    >×</button>
+                </span>
+            </div>
+            <div v-if="canEdit" class="buttons panel-actions">
                 <template v-if="selected.assignees.length < selected.capacity && assignable.length > 0">
-                    <select v-model="member">
+                    <select v-model="member" aria-label="Person to assign">
                         <option value="" disabled>Choose someone…</option>
                         <option v-for="p in assignable" :key="p.user" :value="p.user">{{ p.username }}</option>
                     </select>
-                    <button :disabled="busy || member === ''" @click="assign">Assign</button>
+                    <button class="primary" :disabled="busy || member === ''" @click="assign">Assign</button>
                 </template>
-                <button :disabled="busy" @click="$emit('remove', selected.id)">Delete</button>
+                <button class="danger" :disabled="busy" @click="$emit('remove', selected.id)">Delete</button>
             </div>
             <!-- pages can add more to the panel here (the week page adds attendance) -->
             <slot name="panel" :block="selected"></slot>
@@ -199,7 +243,7 @@ export const ScheduleBoard = defineComponent({
                 <input v-model.number="capacity" type="number" min="1" step="1" />
             </label>
             <div class="buttons">
-                <button type="submit" :disabled="busy">{{ addLabel }}</button>
+                <button type="submit" class="primary" :disabled="busy">{{ addLabel }}</button>
             </div>
             <p v-if="formError" class="error">{{ formError }}</p>
         </form>

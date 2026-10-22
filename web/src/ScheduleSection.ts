@@ -3,6 +3,7 @@ import { client, errorMessage, loggedOutBy, makePerform, savedSession, saveSessi
 import { usePolling } from "./polling.ts";
 import { ScheduleBoard, type Block, type Person } from "./ScheduleBoard.ts";
 import { dateLabel, mondayOf, WEEKDAYS, type Weekday } from "./time.ts";
+import { WeekPage } from "./WeekPage.ts";
 
 interface MemberRow extends Person {
     role: string;
@@ -23,17 +24,19 @@ interface WeekRow {
     start: string;
 }
 
-// a class's schedule: the master weekly template, and its published weeks
+// a class's schedule, as tabs: the master weekly template, then one tab per published week
 export const ScheduleSection = defineComponent({
-    components: { ScheduleBoard },
+    components: { ScheduleBoard, WeekPage },
     props: {
         group: { type: String, required: true },
         name: { type: String, required: true },
         role: { type: String, required: true },
         me: { type: String, required: true },
     },
-    emits: ["logged-out", "open-week"],
+    emits: ["logged-out"],
     setup(props, { emit }) {
+        // which tab is showing: "master", or a published week's id
+        const tab = ref("master");
         const roster = ref<MemberRow[]>([]);
         // your role right now, from your own row of the latest roster (it may have changed since the
         // class was opened); until the roster loads, the role the class was opened with
@@ -148,10 +151,17 @@ export const ScheduleSection = defineComponent({
             }
         }
 
+        // after a week is deleted from its tab, go back to the master schedule
+        async function weekDeleted() {
+            tab.value = "master";
+            await load();
+        }
+
         onMounted(load);
         usePolling(load);
 
         return {
+            tab, weekDeleted,
             canEdit, isLA, roster, weeks, loading, loadError, load,
             blocks, scheduleError, scheduleBusy, assignSlot, unassignSlot, deleteSlot, addSlot,
             publishDate, publishName, publishError, publishing, publish, dateLabel,
@@ -169,6 +179,31 @@ export const ScheduleSection = defineComponent({
         <p v-else-if="loadError" class="error">{{ loadError }}</p>
 
         <template v-else>
+            <nav class="tabs" aria-label="Schedule">
+                <button class="tab" :class="{ active: tab === 'master' }" @click="tab = 'master'">Master schedule</button>
+                <button
+                    v-for="w in weeks"
+                    :key="w.week"
+                    class="tab"
+                    :class="{ active: tab === w.week }"
+                    @click="tab = w.week"
+                >
+                    {{ w.name }} <span class="tab-date">{{ dateLabel(w.start) }}</span>
+                </button>
+            </nav>
+
+            <WeekPage
+                v-if="tab !== 'master'"
+                :key="tab"
+                :week="tab"
+                :group="group"
+                :role="role"
+                :me="me"
+                @deleted="weekDeleted"
+                @logged-out="(message) => $emit('logged-out', message)"
+            />
+
+            <template v-else>
             <section class="card">
                 <h2>Master schedule</h2>
                 <p class="muted">The weekly template. Publishing a week copies it, so changes here only affect weeks published later.</p>
@@ -188,16 +223,10 @@ export const ScheduleSection = defineComponent({
                 />
             </section>
 
-            <section class="card">
-                <h2>Published weeks</h2>
-                <p v-if="weeks.length === 0" class="muted">No weeks published yet.</p>
-                <ul v-else>
-                    <li v-for="w in weeks" :key="w.week">
-                        <button class="link" @click="$emit('open-week', w.week)">{{ w.name }}</button>
-                        <span class="muted"> · week of {{ dateLabel(w.start) }}</span>
-                    </li>
-                </ul>
-                <form v-if="canEdit" class="inline-form" @submit.prevent="publish">
+            <section v-if="canEdit" class="card">
+                <h2>Publish a week</h2>
+                <p class="muted">Copies the master schedule above into a real week, which then gets its own tab for covers and attendance.</p>
+                <form class="inline-form" @submit.prevent="publish">
                     <label>Any day in the week
                         <input v-model="publishDate" type="date" />
                     </label>
@@ -210,6 +239,7 @@ export const ScheduleSection = defineComponent({
                 </form>
                 <p v-if="publishError" class="error">{{ publishError }}</p>
             </section>
+            </template>
         </template>
     `,
 });

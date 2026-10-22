@@ -37,7 +37,8 @@ export const WeekPage = defineComponent({
         role: { type: String, required: true },
         me: { type: String, required: true },
     },
-    emits: ["back", "logged-out"],
+    // deleted: the week was deleted, so the schedule should switch away from it
+    emits: ["deleted", "logged-out"],
     setup(props, { emit }) {
 
         const name = ref("");
@@ -261,7 +262,7 @@ export const WeekPage = defineComponent({
                 weekError,
                 weekBusy,
             );
-            if (ok) emit("back");
+            if (ok) emit("deleted");
         }
 
         onMounted(load);
@@ -277,16 +278,17 @@ export const WeekPage = defineComponent({
         };
     },
     template: `
-        <div class="buttons">
-            <button @click="$emit('back')">← Back to schedule</button>
-            <button :disabled="loading" @click="load">Refresh</button>
-        </div>
-        <p v-if="loading">Loading…</p>
+        <p v-if="loading" class="muted">Loading…</p>
         <p v-else-if="loadError" class="error">{{ loadError }}</p>
 
         <template v-else>
-            <h2>{{ name }}</h2>
-            <p>Week of {{ dateLabel(start) }}</p>
+            <section class="card">
+            <div class="card-head">
+                <div>
+                    <h2>{{ name }}</h2>
+                    <p class="muted">Week of {{ dateLabel(start) }}. Changes here only affect this week.</p>
+                </div>
+            </div>
 
             <ScheduleBoard
                 :blocks="blocks"
@@ -307,9 +309,9 @@ export const WeekPage = defineComponent({
                 <template #panel="{ block }">
                     <h4>Attendance</h4>
                     <template v-if="canEdit">
-                        <p v-if="block.assignees.length === 0">Nobody to mark.</p>
+                        <p v-if="block.assignees.length === 0" class="muted">Nobody to mark.</p>
                         <div v-for="a in block.assignees" :key="a.user" class="buttons">
-                            <span>{{ a.username }}</span>
+                            <span class="mark-name">{{ a.username }}</span>
                             <select
                                 :value="statusOf(block.id, a.user)"
                                 :disabled="attendanceBusy"
@@ -323,56 +325,68 @@ export const WeekPage = defineComponent({
                         </div>
                     </template>
                     <p v-else-if="block.assignees.some((a) => a.user === me)">
-                        You: {{ statusOf(block.id, me) || "not marked" }}
+                        You:
+                        <span class="badge" :class="statusOf(block.id, me) === '' ? 'unmarked' : statusOf(block.id, me).toLowerCase()">
+                            {{ statusOf(block.id, me) || "not marked" }}
+                        </span>
                     </p>
-                    <p v-else>You're not on this shift.</p>
+                    <p v-else class="muted">You're not on this shift.</p>
                     <p v-if="attendanceError" class="error">{{ attendanceError }}</p>
 
                     <template v-if="isOn(block.id, me)">
                         <h4>Cover</h4>
                         <div v-if="myActiveRequest(block.id)" class="buttons">
-                            <span>You asked for a cover ({{ myActiveRequest(block.id).status.toLowerCase() }}).</span>
-                            <button :disabled="coverBusy" @click="withdraw(myActiveRequest(block.id).request)">Withdraw</button>
+                            <span class="badge" :class="myActiveRequest(block.id).status.toLowerCase()">
+                                Cover {{ myActiveRequest(block.id).status.toLowerCase() }}
+                            </span>
+                            <button :disabled="coverBusy" @click="withdraw(myActiveRequest(block.id).request)">Withdraw request</button>
                         </div>
                         <button v-else :disabled="coverBusy" @click="requestCover(block.id)">Request cover</button>
                     </template>
                 </template>
             </ScheduleBoard>
+            </section>
 
-            <h3>Cover requests</h3>
-            <p v-if="coverError" class="error">{{ coverError }}</p>
-            <p v-if="covers.length === 0">No cover requests this week.</p>
-            <ul v-else>
-                <li v-for="c in covers" :key="c.request">
-                    {{ dateLabel(c.start) }} · {{ hoursLabel(c.start, c.end) }} ·
-                    {{ nameOf(c.requester) }} → {{ c.claimer === null ? "(open)" : nameOf(c.claimer) }}
-                    · {{ c.status }}
-                    <button v-if="canClaim(c)" :disabled="coverBusy" @click="claim(c.request)">Claim</button>
-                    <template v-if="canEdit && ACTIVE.includes(c.status)">
-                        <button v-if="c.status === 'CLAIMED'" :disabled="coverBusy" @click="approve(c.request)">Approve</button>
-                        <button :disabled="coverBusy" @click="deny(c.request)">Deny</button>
-                    </template>
-                    <button
-                        v-if="c.requester === me && ACTIVE.includes(c.status)"
-                        :disabled="coverBusy"
-                        @click="withdraw(c.request)"
-                    >Withdraw</button>
-                </li>
-            </ul>
+            <section class="card">
+                <h2>Cover requests this week</h2>
+                <p v-if="coverError" class="error">{{ coverError }}</p>
+                <p v-if="covers.length === 0" class="muted">No cover requests this week.</p>
+                <ul v-else class="plain-list">
+                    <li v-for="c in covers" :key="c.request">
+                        <span>
+                            {{ dateLabel(c.start) }} · {{ hoursLabel(c.start, c.end) }} ·
+                            {{ nameOf(c.requester) }} → {{ c.claimer === null ? "anyone" : nameOf(c.claimer) }}
+                        </span>
+                        <span class="badge" :class="c.status.toLowerCase()">{{ c.status.toLowerCase() }}</span>
+                        <span class="buttons">
+                            <button v-if="canClaim(c)" class="primary" :disabled="coverBusy" @click="claim(c.request)">Claim</button>
+                            <template v-if="canEdit && ACTIVE.includes(c.status)">
+                                <button v-if="c.status === 'CLAIMED'" class="primary" :disabled="coverBusy" @click="approve(c.request)">Approve</button>
+                                <button :disabled="coverBusy" @click="deny(c.request)">Deny</button>
+                            </template>
+                            <button
+                                v-if="c.requester === me && ACTIVE.includes(c.status)"
+                                :disabled="coverBusy"
+                                @click="withdraw(c.request)"
+                            >Withdraw</button>
+                        </span>
+                    </li>
+                </ul>
+            </section>
 
-            <template v-if="canEdit">
-                <h3>This week</h3>
+            <section v-if="canEdit" class="card">
+                <h2>This week</h2>
                 <form class="inline-form" @submit.prevent="rename">
                     <label>Name
                         <input v-model="renameTo" />
                     </label>
                     <div class="buttons">
                         <button type="submit" :disabled="weekBusy">Rename</button>
-                        <button type="button" :disabled="weekBusy" @click="deleteWeek">Delete week</button>
+                        <button type="button" class="danger" :disabled="weekBusy" @click="deleteWeek">Delete week</button>
                     </div>
                 </form>
                 <p v-if="weekError" class="error">{{ weekError }}</p>
-            </template>
+            </section>
         </template>
     `,
 });
