@@ -814,6 +814,103 @@ button.on-dark:hover:not(:disabled) {
     }
 }
 
+/* ===== attendance ===== */
+
+.now-shift + .now-shift {
+    margin-top: var(--space);
+    padding-top: var(--space);
+    border-top: 1px solid var(--border);
+}
+
+.mark-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.4rem 0;
+}
+
+/* Present / Late / Absent as one joined control; the chosen one fills with its status color */
+.segmented {
+    display: inline-flex;
+}
+
+.seg {
+    border-radius: 0;
+    border-color: var(--border);
+    color: var(--ink);
+    margin-left: -1px;
+}
+
+.seg:first-child {
+    border-radius: var(--radius-small) 0 0 var(--radius-small);
+    margin-left: 0;
+}
+
+.seg:last-child {
+    border-radius: 0 var(--radius-small) var(--radius-small) 0;
+}
+
+.seg.active.present {
+    background: var(--success);
+    border-color: var(--success);
+    color: #fff;
+}
+
+.seg.active.late {
+    background: var(--mauve);
+    border-color: var(--mauve);
+    color: #fff;
+}
+
+.seg.active.absent {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+
+/* summary numbers, e.g. "4 Present" */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    font-size: var(--size-small);
+    color: var(--muted);
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.stat-number.present {
+    color: var(--success);
+}
+
+.stat-number.late {
+    color: var(--mauve);
+}
+
+.stat-number.absent {
+    color: var(--danger);
+}
+
+@media (max-width: 40rem) {
+    .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 /* a list of rows that each have text, a badge, and buttons */
 .plain-list {
     list-style: none;

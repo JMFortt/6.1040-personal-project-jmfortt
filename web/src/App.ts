@@ -173,6 +173,8 @@ export const App = defineComponent({
                         v-else-if="section === 'attendance'"
                         :group="openClass.group"
                         :name="openClass.name"
+                        :role="openClass.role"
+                        :me="me"
                         @logged-out="loggedOut"
                     />
                     <MembersSection
