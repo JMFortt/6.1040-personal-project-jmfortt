@@ -63,10 +63,14 @@ describe("RoleBasedAccessing", () => {
 
         const group = await newGroup();
         await expect(rba.invite({ group, user: "owner", role: "helper" })).rejects.toThrow(AlreadyInGroup);
-        await rba.invite({ group, user: "ari", role: "helper" });
+        expect(await rba._invitesForUser({ user: "owner" })).toEqual([]);
+
+        const { invite } = await rba.invite({ group, user: "ari", role: "helper" });
         await expect(rba.invite({ group, user: "ari", role: "lead" })).rejects.toThrow(
             "That user is already a member of or invited to this group.",
         );
+        // still just the first invite, with its original role
+        expect(await rba._invitesForUser({ user: "ari" })).toEqual([{ invite, group, role: "helper" }]);
     });
 
     test("accepting is refused for an unknown invite or someone else's invite, and an accepted invite is gone", async () => {
@@ -75,6 +79,9 @@ describe("RoleBasedAccessing", () => {
         const group = await newGroup();
         const { invite } = await rba.invite({ group, user: "ari", role: "helper" });
         await expect(rba.accept({ invite, user: "someone-else" })).rejects.toThrow(NotInvitee);
+        // the refused accept made nobody a member
+        expect(await rba._role({ group, user: "someone-else" })).toEqual([]);
+        expect(await rba._role({ group, user: "ari" })).toEqual([]);
 
         expect(await rba._invitesForUser({ user: "ari" })).toEqual([{ invite, group, role: "helper" }]);
         await rba.accept({ invite, user: "ari" });
@@ -101,6 +108,7 @@ describe("RoleBasedAccessing", () => {
         const group = await newGroup();
         await expect(rba.changeRole({ group, user: "owner", role: "helper" })).rejects.toThrow(CannotChangeOwnerRole);
         await expect(rba.removeMember({ group, user: "owner" })).rejects.toThrow(CannotRemoveOwner);
+        expect(await rba._members({ group })).toEqual([{ user: "owner", role: "admin" }]);
     });
 
     test("changing the role of or removing a non-member is refused", async () => {
@@ -109,6 +117,7 @@ describe("RoleBasedAccessing", () => {
         await expect(rba.removeMember({ group, user: "stranger" })).rejects.toThrow(
             "That user is not a member of this group.",
         );
+        expect(await rba._members({ group })).toEqual([{ user: "owner", role: "admin" }]);
     });
 
     test("_groupsForUser lists a user's groups with their role, ordered by name", async () => {

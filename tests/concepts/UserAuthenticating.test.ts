@@ -41,11 +41,18 @@ describe("UserAuthenticating", () => {
             "The username and password must not be empty.",
         );
         await expect(authenticating.login({ username: "ari", password: "" })).rejects.toThrow(LoginFailed);
+        // nothing was created
+        expect(await authenticating._user({ username: "" })).toEqual([]);
+        expect(await authenticating._user({ username: "ari" })).toEqual([]);
     });
 
-    test("a taken username is refused", async () => {
-        await authenticating.register({ username: "ari", password: "hunter2" });
+    test("a taken username is refused, and the existing account is unchanged", async () => {
+        const { user } = await authenticating.register({ username: "ari", password: "hunter2" });
         await expect(authenticating.register({ username: "ari", password: "other" })).rejects.toThrow(UsernameTaken);
+        // still the same single account, with the original password
+        expect(await authenticating._user({ username: "ari" })).toEqual([{ user }]);
+        expect(await authenticating.login({ username: "ari", password: "hunter2" })).toEqual({ user });
+        await expect(authenticating.login({ username: "ari", password: "other" })).rejects.toThrow(LoginFailed);
     });
 
     test("a wrong password and an unknown username are refused the same way", async () => {

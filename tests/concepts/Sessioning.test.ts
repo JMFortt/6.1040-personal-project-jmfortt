@@ -28,11 +28,13 @@ describe("Sessioning", () => {
         await expect(sessioning.current({ session: "made-up" })).rejects.toThrow("You are not logged in.");
     });
 
-    test("ending an unknown or already ended session is refused", async () => {
+    test("ending an unknown or already ended session is refused, and other sessions are untouched", async () => {
+        const other = await sessioning.start({ user: "bea" });
         await expect(sessioning.end({ session: "made-up" })).rejects.toThrow(SessionNotFound);
         const { session } = await sessioning.start({ user: "ari" });
         await sessioning.end({ session });
         await expect(sessioning.end({ session })).rejects.toThrow("There is no such session.");
+        expect(await sessioning.current(other)).toEqual({ user: "bea" });
     });
 
     test("a user's sessions are separate, so ending one leaves the other", async () => {

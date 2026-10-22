@@ -13,3 +13,16 @@ It's a tool for courses to manage scheduling, attendance, covers, and schedule s
 ## P3
 - You can read the updated user journey and watch the updated demo video [here](milestones/p3/user_journey.md)
 - You can see the visual design study [here](milestones/p3/visual_design_study.md)
+
+## Running the tests
+
+The tests use Bun and a local DB.
+
+1. Install dependencies: `bun install`
+2. Copy `.env.example` to `.env`
+3. Start MongoDB in a container (needs Podman running): `bun run db:up`.
+4. Run the tests: `bun run test`
+
+Each test file uses its own database (named `test_…`), which it empties before each test and drops when it finishes, so the tests never touch the app data. Concept tests are in `tests/concepts/`; tests of the full API (endpoints, permissions, and reactions) are in `tests/compositions/`.
+
+The output of the latest run is saved in [tests/output.txt](tests/output.txt).

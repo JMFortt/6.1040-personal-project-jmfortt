@@ -41,6 +41,7 @@ describe("ShiftTrading", () => {
     test("only one active request per person per shift, but a new one is allowed once the old one is resolved", async () => {
         const { request } = await trading.requestCover({ requester: "ari", shift: "monday" });
         await expect(trading.requestCover({ requester: "ari", shift: "monday" })).rejects.toThrow(ActiveRequestExists);
+        expect(await trading._requestsForShift({ shift: "monday" })).toHaveLength(1);
         // someone else, or another shift, is fine
         await trading.requestCover({ requester: "bea", shift: "monday" });
         await trading.requestCover({ requester: "ari", shift: "tuesday" });
@@ -61,8 +62,11 @@ describe("ShiftTrading", () => {
         await expect(trading.claim({ request: "nope", claimer: "bea" })).rejects.toThrow(RequestNotFound);
         const { request } = await trading.requestCover({ requester: "ari", shift: "monday" });
         await expect(trading.claim({ request, claimer: "ari" })).rejects.toThrow(OwnRequest);
+        expect(await trading._request({ request })).toEqual([{ requester: "ari", shift: "monday", claimer: null, status: "OPEN" }]);
         await trading.claim({ request, claimer: "bea" });
         await expect(trading.claim({ request, claimer: "cal" })).rejects.toThrow(NotOpen);
+        // the first claim stands
+        expect(await trading._request({ request })).toEqual([{ requester: "ari", shift: "monday", claimer: "bea", status: "CLAIMED" }]);
     });
 
     test("simultaneous claims only let one person claim", async () => {
@@ -78,6 +82,7 @@ describe("ShiftTrading", () => {
         await expect(trading.approve({ request: "nope" })).rejects.toThrow(RequestNotFound);
         const { request } = await trading.requestCover({ requester: "ari", shift: "monday" });
         await expect(trading.approve({ request })).rejects.toThrow(NotClaimed);
+        expect((await trading._request({ request }))[0]!.status).toBe("OPEN");
     });
 
     test("clearing a shift removes all of its requests and nothing else", async () => {

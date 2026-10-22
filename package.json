@@ -18,6 +18,7 @@
   },
   "scripts": {
     "generate": "sync-engine artifacts pin",
+    "test": "bun test",
     "check": "sync-engine check && sync-engine artifacts check && tsc --noEmit",
     "start": "bun src/main.ts",
     "check:design": "sync-engine check-design design/concepts/*.md design/types.md design/compositions/*.md",
