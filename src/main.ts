@@ -1,5 +1,8 @@
 import { createGateway } from "@mit-sdg/sync-engine/boundary";
 import { createHttpHandler } from "@mit-sdg/sync-engine-http/handler";
+// Bun bundles the Vue page (and the .ts files it loads) itself when the server starts,
+// so one server handles both the page and the API, with no separate build step
+import homepage from "../web/index.html";
 import { assembleApplication } from "./assembly.ts";
 import { policy } from "./http.ts";
 import { db } from "./db.ts";
@@ -12,6 +15,7 @@ const server = Bun.serve({
     hostname: process.env.HOST ?? "127.0.0.1",
     port: Number(process.env.PORT ?? 3000),
     routes: {
+        "/": homepage,
         "/api/*": api,
         "/health": async () => {
             try {
@@ -27,4 +31,4 @@ const server = Bun.serve({
     },
 });
 
-console.log(`Backend ready on ${server.url}`);
+console.log(`TAble ready on ${server.url}`);
