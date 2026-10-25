@@ -4,6 +4,8 @@ Hello! This is my 6.1040 personal project "TAble".
 
 It's a tool for courses to manage scheduling, attendance, covers, and schedule swaps for student workers in classes with labs or office hours.
 
+It's deployed at [table.mit-sdg.dev](https://table.mit-sdg.dev/).
+
 ## P1
 - You can see the design documentation for TAble [here](milestones/p1/design_doc.md).
 
@@ -17,7 +19,11 @@ It's a tool for courses to manage scheduling, attendance, covers, and schedule s
 ## P4
 - You can read the final design document and watch the final demo video [here](milestones/p4/final_design_document.md)
 
-## Running the tests
+## Setting up the app locally
+
+This repo has all that you need to run TAble locally on your computer. Pull the latest commit, install any needed dependencies with `bun install`, and run `bun run dev` to spin it up locally and try it out yourself.
+
+## Running the tests locally
 
 The tests use Bun and a local DB.
 
