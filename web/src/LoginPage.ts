@@ -53,7 +53,7 @@ export const LoginPage = defineComponent({
     },
     template: `
         <form class="card login" @submit.prevent="submit('login')">
-            <h1><span class="logo">TA</span> TAble</h1>
+            <h1 class="wordmark"><b>TA</b>ble</h1>
             <p class="muted">Shift scheduling, covers, and attendance for course staff.</p>
             <label>
                 Username

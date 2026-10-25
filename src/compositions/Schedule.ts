@@ -2,7 +2,7 @@ import { endpoint, receive, respond } from "@mit-sdg/sync-engine/boundary";
 import { each, former, no, where } from "@mit-sdg/sync-engine/language";
 import { concepts } from "../concepts.ts";
 import { IsMember, MayEditSchedule } from "./Access.ts";
-import { createShiftInput, createSlotInput, idsInput, publishInput, renameInput } from "./validators.ts";
+import { capacityInput, createShiftInput, createSlotInput, idsInput, publishInput, renameInput } from "./validators.ts";
 
 const { Sessioning, UserAuthenticating, ShiftScheduling } = concepts;
 
@@ -183,6 +183,24 @@ const UnassignSlot = endpoint(
     { input: { required: ["session", "slot", "member"] }, validators: { input: idsInput("slot", "member") } },
 );
 
+const SetSlotCapacity = endpoint(
+    "/schedule/slots/capacity",
+    ({ session, slot, capacity, user, group }) =>
+        receive({ session, slot, capacity })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(ShiftScheduling._slot({ slot }).is({ context: group }), MayEditSchedule({ user, group }))
+                    .then(ShiftScheduling.setSlotCapacity({ slot, capacity }).responds({}))
+                    .then(respond({ slot }))
+                    .named("allowed"),
+                where(no(ShiftScheduling._slot({ slot }))).then(respond({ error: "NO_SUCH_SLOT" })).named("no-slot"),
+                where(ShiftScheduling._slot({ slot }).is({ context: group }), no(MayEditSchedule({ user, group })))
+                    .then(respond({ error: "NOT_ALLOWED" }))
+                    .named("not-allowed"),
+            ),
+    { input: { required: ["session", "slot", "capacity"] }, validators: { input: capacityInput("slot") } },
+);
+
 // --- published weeks (TA/STAFF) ---
 
 const PublishWeek = endpoint(
@@ -322,7 +340,27 @@ const UnassignShift = endpoint(
     { input: { required: ["session", "shift", "member"] }, validators: { input: idsInput("shift", "member") } },
 );
 
+const SetShiftCapacity = endpoint(
+    "/schedule/shifts/capacity",
+    ({ session, shift, capacity, user, group }) =>
+        receive({ session, shift, capacity })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(ShiftScheduling._shift({ shift }).is({ context: group }), MayEditSchedule({ user, group }))
+                    .then(ShiftScheduling.setShiftCapacity({ shift, capacity }).responds({}))
+                    .then(respond({ shift }))
+                    .named("allowed"),
+                where(no(ShiftScheduling._shift({ shift }))).then(respond({ error: "NO_SUCH_SHIFT" })).named("no-shift"),
+                where(ShiftScheduling._shift({ shift }).is({ context: group }), no(MayEditSchedule({ user, group })))
+                    .then(respond({ error: "NOT_ALLOWED" }))
+                    .named("not-allowed"),
+            ),
+    { input: { required: ["session", "shift", "capacity"] }, validators: { input: capacityInput("shift") } },
+);
+
 export const composition = {
+    SetSlotCapacity,
+    SetShiftCapacity,
     Template,
     Weeks,
     WeekView,

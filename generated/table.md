@@ -105,6 +105,10 @@ Defined in [ShiftScheduling](../design/concepts/ShiftScheduling.md), line 1.
 - `unassignSlot(slot: Slot, user: User) : returns ()`
   - Refuses `SLOT_NOT_FOUND`: There is no such slot.
   - Refuses `NOT_ASSIGNED`: That user is not assigned to this shift.
+- `setSlotCapacity(slot: Slot, capacity: Number) : returns ()`
+  - Refuses `SLOT_NOT_FOUND`: There is no such slot.
+  - Refuses `INVALID_CAPACITY`: The shift's capacity must be at least 1.
+  - Refuses `CAPACITY_BELOW_ASSIGNED`: More people are on this shift than that. Unassign someone first.
 - `publishWeek(context: Context, start: DateTime, name: String) : returns (week: Week)`
   - Refuses `WEEK_ALREADY_PUBLISHED`: That week has already been published.
 - `renameWeek(week: Week, name: String) : returns ()`
@@ -124,6 +128,10 @@ Defined in [ShiftScheduling](../design/concepts/ShiftScheduling.md), line 1.
 - `unassign(shift: Shift, user: User) : returns ()`
   - Refuses `SHIFT_NOT_FOUND`: There is no such shift.
   - Refuses `NOT_ASSIGNED`: That user is not assigned to this shift.
+- `setShiftCapacity(shift: Shift, capacity: Number) : returns ()`
+  - Refuses `SHIFT_NOT_FOUND`: There is no such shift.
+  - Refuses `INVALID_CAPACITY`: The shift's capacity must be at least 1.
+  - Refuses `CAPACITY_BELOW_ASSIGNED`: More people are on this shift than that. Unassign someone first.
 - `reassign(shift: Shift, from: User, to: User) : returns ()`
   - Refuses `SHIFT_NOT_FOUND`: There is no such shift.
   - Refuses `NOT_ASSIGNED`: That user is not assigned to this shift.
@@ -2239,8 +2247,8 @@ then
 ### Schedule.AssignShift
 
 Authored path: `Schedule.AssignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 74.
 
 ```reaction
 when RequestBoundary.request (member, path: "/schedule/shifts/assign", requestId, session, shift)
@@ -2251,8 +2259,8 @@ then
 ### Schedule.AssignShift:allowed#2
 
 Authored path: `Schedule.AssignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 74.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.AssignShift
@@ -2268,8 +2276,8 @@ then
 ### Schedule.AssignShift:allowed#3
 
 Authored path: `Schedule.AssignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 74.
 
 ```reaction
 when ShiftScheduling.assign (shift, user: member), asked by Schedule.AssignShift:allowed#2
@@ -2282,8 +2290,8 @@ then
 ### Schedule.AssignShift:no-shift#2
 
 Authored path: `Schedule.AssignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 74.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.AssignShift
@@ -2297,8 +2305,8 @@ then
 ### Schedule.AssignShift:not-allowed#2
 
 Authored path: `Schedule.AssignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 74.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.AssignShift
@@ -2313,8 +2321,8 @@ then
 ### Schedule.AssignShift:not-in-class#2
 
 Authored path: `Schedule.AssignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 59.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 74.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.AssignShift
@@ -2331,7 +2339,7 @@ then
 
 Authored path: `Schedule.AssignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 31.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 43.
 
 ```reaction
 when RequestBoundary.request (member, path: "/schedule/slots/assign", requestId, session, slot)
@@ -2343,7 +2351,7 @@ then
 
 Authored path: `Schedule.AssignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 31.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 43.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.AssignSlot
@@ -2360,7 +2368,7 @@ then
 
 Authored path: `Schedule.AssignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 31.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 43.
 
 ```reaction
 when ShiftScheduling.assignSlot (slot, user: member), asked by Schedule.AssignSlot:allowed#2
@@ -2374,7 +2382,7 @@ then
 
 Authored path: `Schedule.AssignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 31.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 43.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.AssignSlot
@@ -2389,7 +2397,7 @@ then
 
 Authored path: `Schedule.AssignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 31.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 43.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.AssignSlot
@@ -2405,7 +2413,7 @@ then
 
 Authored path: `Schedule.AssignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 31.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 38.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 43.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.AssignSlot
@@ -2421,8 +2429,8 @@ then
 ### Schedule.CreateShift
 
 Authored path: `Schedule.CreateShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 72.
 
 ```reaction
 when RequestBoundary.request (capacity, end, path: "/schedule/shifts/create", requestId, session, start, week)
@@ -2433,8 +2441,8 @@ then
 ### Schedule.CreateShift:allowed#2
 
 Authored path: `Schedule.CreateShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 72.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.CreateShift
@@ -2449,8 +2457,8 @@ then
 ### Schedule.CreateShift:allowed#3
 
 Authored path: `Schedule.CreateShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 72.
 
 ```reaction
 when ShiftScheduling.createShift (capacity, end, start, week, shift), asked by Schedule.CreateShift:allowed#2
@@ -2463,8 +2471,8 @@ then
 ### Schedule.CreateShift:no-week#2
 
 Authored path: `Schedule.CreateShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 72.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.CreateShift
@@ -2478,8 +2486,8 @@ then
 ### Schedule.CreateShift:not-allowed#2
 
 Authored path: `Schedule.CreateShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 72.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.CreateShift
@@ -2495,7 +2503,7 @@ then
 
 Authored path: `Schedule.CreateSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 29.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 36.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 41.
 
 ```reaction
 when RequestBoundary.request (capacity, endMinute, group, path: "/schedule/slots/create", requestId, session, startMinute, weekday)
@@ -2507,7 +2515,7 @@ then
 
 Authored path: `Schedule.CreateSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 29.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 36.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 41.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.CreateSlot
@@ -2522,7 +2530,7 @@ then
 
 Authored path: `Schedule.CreateSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 29.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 36.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 41.
 
 ```reaction
 when ShiftScheduling.createSlot (capacity, context: group, endMinute, startMinute, weekday, slot), asked by Schedule.CreateSlot:allowed#2
@@ -2536,7 +2544,7 @@ then
 
 Authored path: `Schedule.CreateSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 29.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 36.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 41.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.CreateSlot
@@ -2550,8 +2558,8 @@ then
 ### Schedule.DeleteShift
 
 Authored path: `Schedule.DeleteShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 73.
 
 ```reaction
 when RequestBoundary.request (path: "/schedule/shifts/delete", requestId, session, shift)
@@ -2562,8 +2570,8 @@ then
 ### Schedule.DeleteShift:allowed#2
 
 Authored path: `Schedule.DeleteShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 73.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteShift
@@ -2578,8 +2586,8 @@ then
 ### Schedule.DeleteShift:allowed#3
 
 Authored path: `Schedule.DeleteShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 73.
 
 ```reaction
 when ShiftScheduling.deleteShift (shift), asked by Schedule.DeleteShift:allowed#2
@@ -2592,8 +2600,8 @@ then
 ### Schedule.DeleteShift:no-shift#2
 
 Authored path: `Schedule.DeleteShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 73.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteShift
@@ -2607,8 +2615,8 @@ then
 ### Schedule.DeleteShift:not-allowed#2
 
 Authored path: `Schedule.DeleteShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 58.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 64.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 63.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 73.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteShift
@@ -2624,7 +2632,7 @@ then
 
 Authored path: `Schedule.DeleteSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 30.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 42.
 
 ```reaction
 when RequestBoundary.request (path: "/schedule/slots/delete", requestId, session, slot)
@@ -2636,7 +2644,7 @@ then
 
 Authored path: `Schedule.DeleteSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 30.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 42.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteSlot
@@ -2652,7 +2660,7 @@ then
 
 Authored path: `Schedule.DeleteSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 30.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 42.
 
 ```reaction
 when ShiftScheduling.deleteSlot (slot), asked by Schedule.DeleteSlot:allowed#2
@@ -2666,7 +2674,7 @@ then
 
 Authored path: `Schedule.DeleteSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 30.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 42.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteSlot
@@ -2681,7 +2689,7 @@ then
 
 Authored path: `Schedule.DeleteSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 30.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 37.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 42.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteSlot
@@ -2696,8 +2704,8 @@ then
 ### Schedule.DeleteWeek
 
 Authored path: `Schedule.DeleteWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 57.
 
 ```reaction
 when RequestBoundary.request (path: "/schedule/weeks/delete", requestId, session, week)
@@ -2708,8 +2716,8 @@ then
 ### Schedule.DeleteWeek:allowed#2
 
 Authored path: `Schedule.DeleteWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 57.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteWeek
@@ -2724,8 +2732,8 @@ then
 ### Schedule.DeleteWeek:allowed#3
 
 Authored path: `Schedule.DeleteWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 57.
 
 ```reaction
 when ShiftScheduling.deleteWeek (week), asked by Schedule.DeleteWeek:allowed#2
@@ -2738,8 +2746,8 @@ then
 ### Schedule.DeleteWeek:no-week#2
 
 Authored path: `Schedule.DeleteWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 57.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteWeek
@@ -2753,8 +2761,8 @@ then
 ### Schedule.DeleteWeek:not-allowed#2
 
 Authored path: `Schedule.DeleteWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 47.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 52.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 57.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.DeleteWeek
@@ -2811,8 +2819,8 @@ then
 ### Schedule.PublishWeek
 
 Authored path: `Schedule.PublishWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 50.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 49.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 55.
 
 ```reaction
 when RequestBoundary.request (group, name, path: "/schedule/weeks/publish", requestId, session, start)
@@ -2823,8 +2831,8 @@ then
 ### Schedule.PublishWeek:allowed#2
 
 Authored path: `Schedule.PublishWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 50.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 49.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 55.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.PublishWeek
@@ -2838,8 +2846,8 @@ then
 ### Schedule.PublishWeek:allowed#3
 
 Authored path: `Schedule.PublishWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 50.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 49.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 55.
 
 ```reaction
 when ShiftScheduling.publishWeek (context: group, name, start, week), asked by Schedule.PublishWeek:allowed#2
@@ -2852,8 +2860,8 @@ then
 ### Schedule.PublishWeek:not-allowed#2
 
 Authored path: `Schedule.PublishWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 50.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 49.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 55.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.PublishWeek
@@ -2867,8 +2875,8 @@ then
 ### Schedule.RenameWeek
 
 Authored path: `Schedule.RenameWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 56.
 
 ```reaction
 when RequestBoundary.request (name, path: "/schedule/weeks/rename", requestId, session, week)
@@ -2879,8 +2887,8 @@ then
 ### Schedule.RenameWeek:allowed#2
 
 Authored path: `Schedule.RenameWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 56.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.RenameWeek
@@ -2895,8 +2903,8 @@ then
 ### Schedule.RenameWeek:allowed#3
 
 Authored path: `Schedule.RenameWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 56.
 
 ```reaction
 when ShiftScheduling.renameWeek (name, week), asked by Schedule.RenameWeek:allowed#2
@@ -2909,8 +2917,8 @@ then
 ### Schedule.RenameWeek:no-week#2
 
 Authored path: `Schedule.RenameWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 56.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.RenameWeek
@@ -2924,8 +2932,8 @@ then
 ### Schedule.RenameWeek:not-allowed#2
 
 Authored path: `Schedule.RenameWeek`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 46.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 51.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 56.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.RenameWeek
@@ -2937,11 +2945,157 @@ then
   RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
 ```
 
+### Schedule.SetShiftCapacity
+
+Authored path: `Schedule.SetShiftCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 67.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 71.
+
+```reaction
+when RequestBoundary.request (capacity, path: "/schedule/shifts/capacity", requestId, session, shift)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.SetShiftCapacity:allowed#2
+
+Authored path: `Schedule.SetShiftCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 67.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 71.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.SetShiftCapacity
+where
+  earlier, RequestBoundary.request (capacity, path: "/schedule/shifts/capacity", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.setShiftCapacity (capacity, shift)
+```
+
+### Schedule.SetShiftCapacity:allowed#3
+
+Authored path: `Schedule.SetShiftCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 67.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 71.
+
+```reaction
+when ShiftScheduling.setShiftCapacity (capacity, shift), asked by Schedule.SetShiftCapacity:allowed#2
+where
+  earlier, RequestBoundary.request (capacity, path: "/schedule/shifts/capacity", requestId, session, shift)
+then
+  RequestBoundary.respond (requestId, shift)
+```
+
+### Schedule.SetShiftCapacity:no-shift#2
+
+Authored path: `Schedule.SetShiftCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 67.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 71.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.SetShiftCapacity
+where
+  earlier, RequestBoundary.request (capacity, path: "/schedule/shifts/capacity", requestId, session, shift)
+  no ShiftScheduling._shift (shift)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SHIFT", requestId)
+```
+
+### Schedule.SetShiftCapacity:not-allowed#2
+
+Authored path: `Schedule.SetShiftCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 67.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 71.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.SetShiftCapacity
+where
+  earlier, RequestBoundary.request (capacity, path: "/schedule/shifts/capacity", requestId, session, shift)
+  ShiftScheduling._shift (shift) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
+### Schedule.SetSlotCapacity
+
+Authored path: `Schedule.SetSlotCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 35.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 40.
+
+```reaction
+when RequestBoundary.request (capacity, path: "/schedule/slots/capacity", requestId, session, slot)
+then
+  Sessioning.current (session)
+```
+
+### Schedule.SetSlotCapacity:allowed#2
+
+Authored path: `Schedule.SetSlotCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 35.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 40.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.SetSlotCapacity
+where
+  earlier, RequestBoundary.request (capacity, path: "/schedule/slots/capacity", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  view "(user) may edit the schedule of (group)" with (group, user)
+then
+  ShiftScheduling.setSlotCapacity (capacity, slot)
+```
+
+### Schedule.SetSlotCapacity:allowed#3
+
+Authored path: `Schedule.SetSlotCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 35.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 40.
+
+```reaction
+when ShiftScheduling.setSlotCapacity (capacity, slot), asked by Schedule.SetSlotCapacity:allowed#2
+where
+  earlier, RequestBoundary.request (capacity, path: "/schedule/slots/capacity", requestId, session, slot)
+then
+  RequestBoundary.respond (requestId, slot)
+```
+
+### Schedule.SetSlotCapacity:no-slot#2
+
+Authored path: `Schedule.SetSlotCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 35.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 40.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.SetSlotCapacity
+where
+  earlier, RequestBoundary.request (capacity, path: "/schedule/slots/capacity", requestId, session, slot)
+  no ShiftScheduling._slot (slot)
+then
+  RequestBoundary.respond (error: "NO_SUCH_SLOT", requestId)
+```
+
+### Schedule.SetSlotCapacity:not-allowed#2
+
+Authored path: `Schedule.SetSlotCapacity`.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 35.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 40.
+
+```reaction
+when Sessioning.current (session, user), asked by Schedule.SetSlotCapacity
+where
+  earlier, RequestBoundary.request (capacity, path: "/schedule/slots/capacity", requestId, session, slot)
+  ShiftScheduling._slot (slot) has (context: group)
+  no view "(user) may edit the schedule of (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
+
 ### Schedule.UnassignShift
 
 Authored path: `Schedule.UnassignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 75.
 
 ```reaction
 when RequestBoundary.request (member, path: "/schedule/shifts/unassign", requestId, session, shift)
@@ -2952,8 +3106,8 @@ then
 ### Schedule.UnassignShift:allowed#2
 
 Authored path: `Schedule.UnassignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 75.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.UnassignShift
@@ -2968,8 +3122,8 @@ then
 ### Schedule.UnassignShift:allowed#3
 
 Authored path: `Schedule.UnassignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 75.
 
 ```reaction
 when ShiftScheduling.unassign (shift, user: member), asked by Schedule.UnassignShift:allowed#2
@@ -2982,8 +3136,8 @@ then
 ### Schedule.UnassignShift:no-shift#2
 
 Authored path: `Schedule.UnassignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 75.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.UnassignShift
@@ -2997,8 +3151,8 @@ then
 ### Schedule.UnassignShift:not-allowed#2
 
 Authored path: `Schedule.UnassignShift`.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 60.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 66.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 65.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 75.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.UnassignShift
@@ -3014,7 +3168,7 @@ then
 
 Authored path: `Schedule.UnassignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 32.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
 
 ```reaction
 when RequestBoundary.request (member, path: "/schedule/slots/unassign", requestId, session, slot)
@@ -3026,7 +3180,7 @@ then
 
 Authored path: `Schedule.UnassignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 32.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.UnassignSlot
@@ -3042,7 +3196,7 @@ then
 
 Authored path: `Schedule.UnassignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 32.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
 
 ```reaction
 when ShiftScheduling.unassignSlot (slot, user: member), asked by Schedule.UnassignSlot:allowed#2
@@ -3056,7 +3210,7 @@ then
 
 Authored path: `Schedule.UnassignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 32.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.UnassignSlot
@@ -3071,7 +3225,7 @@ then
 
 Authored path: `Schedule.UnassignSlot`.
 - Covered by [Schedule](../design/compositions/Schedule.md), line 32.
-- Covered by [Schedule](../design/compositions/Schedule.md), line 39.
+- Covered by [Schedule](../design/compositions/Schedule.md), line 44.
 
 ```reaction
 when Sessioning.current (session, user), asked by Schedule.UnassignSlot
@@ -3219,10 +3373,12 @@ not listed here have no explicit input contract.
 - `/invites/accept` — requires `session`, `invite`
 - `/invites/mine` — requires `session`
 - `/schedule/shifts/assign` — requires `session`, `shift`, `member`
+- `/schedule/shifts/capacity` — requires `session`, `shift`, `capacity`
 - `/schedule/shifts/create` — requires `session`, `week`, `start`, `end`, `capacity`
 - `/schedule/shifts/delete` — requires `session`, `shift`
 - `/schedule/shifts/unassign` — requires `session`, `shift`, `member`
 - `/schedule/slots/assign` — requires `session`, `slot`, `member`
+- `/schedule/slots/capacity` — requires `session`, `slot`, `capacity`
 - `/schedule/slots/create` — requires `session`, `group`, `weekday`, `startMinute`, `endMinute`, `capacity`
 - `/schedule/slots/delete` — requires `session`, `slot`
 - `/schedule/slots/unassign` — requires `session`, `slot`, `member`

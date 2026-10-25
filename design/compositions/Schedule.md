@@ -32,7 +32,12 @@ start and end time and a capacity, [remove a slot](reaction:Schedule.DeleteSlot)
 [unassign someone from a slot](reaction:Schedule.UnassignSlot). Assigning someone
 outside the class is refused.
 
+A scheduler can also [change a slot's capacity](reaction:Schedule.SetSlotCapacity), though
+not below 1 or below the number of people already on it; this only affects weeks
+published afterwards.
+
 ```endpoints
+Schedule.SetSlotCapacity at /schedule/slots/capacity
 Schedule.CreateSlot at /schedule/slots/create
 Schedule.DeleteSlot at /schedule/slots/delete
 Schedule.AssignSlot at /schedule/slots/assign
@@ -59,7 +64,11 @@ Changes to a published week only affect that week. A scheduler can
 [assign a member of the class to a shift](reaction:Schedule.AssignShift), and
 [unassign someone from a shift](reaction:Schedule.UnassignShift).
 
+A scheduler can also [change a shift's capacity](reaction:Schedule.SetShiftCapacity) for
+that week only, with the same limits.
+
 ```endpoints
+Schedule.SetShiftCapacity at /schedule/shifts/capacity
 Schedule.CreateShift at /schedule/shifts/create
 Schedule.DeleteShift at /schedule/shifts/delete
 Schedule.AssignShift at /schedule/shifts/assign

@@ -22,6 +22,9 @@
     --danger: #c62828;
     --danger-dark: #a31f1f;
     --danger-tint: #fdeceb;
+    /* late: a dark amber, dark enough for white text on it and for amber text on Porcelain */
+    --amber: #8a5a00;
+    --amber-tint: #fbf0d9;
 
     /* type: Outfit, three weights */
     --font: "Outfit", system-ui, sans-serif;
@@ -350,8 +353,14 @@ select:focus {
 }
 
 .badge.late {
-    background: var(--mauve-tint);
-    color: var(--mauve);
+    background: var(--amber-tint);
+    color: var(--amber);
+}
+
+/* an agreed absence: calm blue rather than the red of an unexcused one */
+.badge.excused {
+    background: var(--baltic-blue-tint);
+    color: var(--baltic-blue-dark);
 }
 
 /* ===== login: a centered card ===== */
@@ -361,16 +370,10 @@ select:focus {
     margin: 4rem auto;
 }
 
-.login h1 {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-}
-
-/* on the login card the logo sits on white, so it's blue instead */
-.login .logo {
-    background: var(--baltic-blue);
-    color: #fff;
+/* on the login card the wordmark sits on white, so it's blue instead */
+.login .wordmark {
+    color: var(--baltic-blue);
+    font-size: 2rem;
 }
 
 /* ===== app shell: top bar, sidebar, content ===== */
@@ -399,15 +402,13 @@ select:focus {
     font-weight: 700;
 }
 
-.logo {
-    display: inline-grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: var(--radius-small);
-    background: var(--porcelain);
-    color: var(--baltic-blue);
-    font-size: 0.85rem;
+/* "TAble": TA in Bold, ble in Medium, so the pun on TA shows without a separate logo box */
+.wordmark {
+    font-weight: 500;
+    letter-spacing: -0.01em;
+}
+
+.wordmark b {
     font-weight: 700;
 }
 
@@ -435,20 +436,13 @@ select:focus {
 .user {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.75rem;
     font-size: var(--size-small);
 }
 
-.avatar {
-    display: inline-grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    background: var(--icy-aqua);
-    color: var(--ink);
-    font-size: 0.8rem;
-    font-weight: 700;
+/* who's logged in, spelled out, since people often have several users open in different tabs */
+.username {
+    font-weight: 500;
 }
 
 /* a secondary button sitting on the blue bar */
@@ -595,27 +589,66 @@ button.on-dark:hover:not(:disabled) {
     box-shadow: 0 2px 6px rgba(36, 33, 43, 0.12);
 }
 
-.block-time {
+/* a block's one line: who's on it on the left, head count on the right. (Its time is already
+   shown by where it sits on the grid.) They share the line, so on a narrow block the names end
+   in "…" instead of running into the count */
+.block-head {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.block-names {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     font-weight: 500;
 }
 
+/* how many people are on the shift */
 .block-count {
-    margin-top: auto;
+    flex: none;
+    min-width: 1.1rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: rgba(36, 33, 43, 0.08);
     color: var(--muted);
-}
-
-/* shifts you're on */
-.block.mine,
-.block.mine:hover:not(:disabled) {
-    background: var(--icy-aqua);
-}
-
-.block.full .block-count {
-    color: var(--success);
+    font-size: 0.7rem;
     font-weight: 500;
+    text-align: center;
 }
 
-/* for LAs: shifts they aren't on */
+/* on a published week, a shift you're on is filled with your attendance status for it */
+.block.status-present,
+.block.status-present:hover:not(:disabled) {
+    background: var(--success-tint);
+    border-left-color: var(--success);
+}
+
+.block.status-late,
+.block.status-late:hover:not(:disabled) {
+    background: var(--amber-tint);
+    border-left-color: var(--amber);
+}
+
+.block.status-absent,
+.block.status-absent:hover:not(:disabled) {
+    background: var(--danger-tint);
+    border-left-color: var(--danger);
+}
+
+.block.status-excused,
+.block.status-excused:hover:not(:disabled) {
+    background: var(--baltic-blue-tint);
+    border-left-color: var(--baltic-blue);
+}
+
+
+/* shifts you aren't on: on published weeks for everyone, on the template for LAs */
 .block.other,
 .block.other:hover:not(:disabled) {
     background: #f1efed;
@@ -624,11 +657,7 @@ button.on-dark:hover:not(:disabled) {
     color: var(--muted);
 }
 
-.block.other .chip {
-    opacity: 0.6;
-}
-
-/* ===== people chips, colored by role ===== */
+/* ===== people chips (in the detail panel), colored by attendance on published weeks ===== */
 
 .chips {
     display: flex;
@@ -649,18 +678,37 @@ button.on-dark:hover:not(:disabled) {
     color: var(--ink);
 }
 
-.chip.role-la {
-    background: var(--coral-tint);
+/* on a published week, chips are colored by attendance instead, which matters more there than role */
+.chip.status-present {
+    background: var(--success);
+    color: #fff;
 }
 
-.chip.role-ta {
-    background: var(--baltic-blue-tint);
-    color: var(--baltic-blue-dark);
+.chip.status-late {
+    background: var(--amber);
+    color: #fff;
 }
 
-.chip.role-staff {
-    background: var(--mauve-tint);
-    color: var(--mauve);
+.chip.status-absent {
+    background: var(--danger);
+    color: #fff;
+}
+
+.chip.status-excused {
+    background: var(--baltic-blue);
+    color: #fff;
+}
+
+.chip.status-none {
+    background: #efedeb;
+    color: var(--ink);
+}
+
+/* the role, small and secondary, inside a status-colored chip */
+.chip-role {
+    font-size: 0.65rem;
+    font-weight: 400;
+    opacity: 0.85;
 }
 
 /* the × to unassign someone, inside their chip */
@@ -697,8 +745,34 @@ button.on-dark:hover:not(:disabled) {
     border: 1px solid var(--border);
 }
 
-.swatch.mine {
-    background: var(--icy-aqua);
+.swatch {
+    background: var(--surface);
+    border-left: 3px solid var(--baltic-blue);
+}
+
+.swatch.status-present {
+    background: var(--success-tint);
+    border-left-color: var(--success);
+}
+
+.swatch.status-late {
+    background: var(--amber-tint);
+    border-left-color: var(--amber);
+}
+
+.swatch.status-absent {
+    background: var(--danger-tint);
+    border-left-color: var(--danger);
+}
+
+.swatch.status-excused {
+    background: var(--baltic-blue-tint);
+    border-left-color: var(--baltic-blue);
+}
+
+.swatch.other {
+    background: #f1efed;
+    border-left-color: #cfc9c4;
 }
 
 /* ===== tabs: the master schedule, then each published week ===== */
@@ -858,8 +932,8 @@ button.on-dark:hover:not(:disabled) {
 }
 
 .seg.active.late {
-    background: var(--mauve);
-    border-color: var(--mauve);
+    background: var(--amber);
+    border-color: var(--amber);
     color: #fff;
 }
 
@@ -869,10 +943,16 @@ button.on-dark:hover:not(:disabled) {
     color: #fff;
 }
 
+.seg.active.excused {
+    background: var(--baltic-blue);
+    border-color: var(--baltic-blue);
+    color: #fff;
+}
+
 /* summary numbers, e.g. "4 Present" */
 .stats {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0.5rem;
     margin-bottom: 0.75rem;
 }
@@ -898,11 +978,15 @@ button.on-dark:hover:not(:disabled) {
 }
 
 .stat-number.late {
-    color: var(--mauve);
+    color: var(--amber);
 }
 
 .stat-number.absent {
     color: var(--danger);
+}
+
+.stat-number.excused {
+    color: var(--baltic-blue);
 }
 
 @media (max-width: 40rem) {
@@ -982,10 +1066,6 @@ button.on-dark:hover:not(:disabled) {
     .crumbs {
         order: 3;
         flex-basis: 100%;
-    }
-
-    .username {
-        display: none;
     }
 }
 

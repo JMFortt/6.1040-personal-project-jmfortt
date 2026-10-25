@@ -29,6 +29,16 @@ describe("AttendanceTracking", () => {
         expect(await attendance._recordsForUser({ user: "ari" })).toEqual([{ event: "monday", status: "LATE" }]);
     });
 
+    test("every status can be recorded, including an excused absence", async () => {
+        const statuses = ["PRESENT", "LATE", "ABSENT", "EXCUSED"] as const;
+        for (const [i, status] of statuses.entries()) {
+            await attendance.mark({ user: `user${i}`, event: "monday", status });
+        }
+        expect(await attendance._recordsForEvent({ event: "monday" })).toEqual(
+            statuses.map((status, i) => ({ user: `user${i}`, status })),
+        );
+    });
+
     test("simultaneous marks still leave one record", async () => {
         await Promise.allSettled([
             attendance.mark({ user: "ari", event: "monday", status: "PRESENT" }),

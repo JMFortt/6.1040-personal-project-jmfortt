@@ -2,6 +2,7 @@ import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { MongoClient } from "mongodb";
 import {
     AlreadyAssigned,
+    CapacityBelowAssigned,
     InvalidCapacity,
     InvalidTimes,
     NotAssigned,
@@ -138,6 +139,43 @@ describe("ShiftScheduling", () => {
         expect(await scheduling._slotAssignees({ slot })).toEqual([]);
         await expect(scheduling.unassignSlot({ slot, user: "ari" })).rejects.toThrow(NotAssigned);
         await expect(scheduling.unassignSlot({ slot: "nope", user: "ari" })).rejects.toThrow(SlotNotFound);
+    });
+
+    test("a slot's capacity can be changed, but not below 1 or below how many are on it", async () => {
+        const slot = await mondaySlot(2);
+        await scheduling.assignSlot({ slot, user: "ari" });
+        await scheduling.assignSlot({ slot, user: "bea" });
+
+        await scheduling.setSlotCapacity({ slot, capacity: 3 });
+        expect((await scheduling._slot({ slot }))[0]!.capacity).toBe(3);
+        // down to exactly how many are on it is fine
+        await scheduling.setSlotCapacity({ slot, capacity: 2 });
+
+        await expect(scheduling.setSlotCapacity({ slot, capacity: 1 })).rejects.toThrow(CapacityBelowAssigned);
+        await expect(scheduling.setSlotCapacity({ slot, capacity: 0 })).rejects.toThrow(InvalidCapacity);
+        await expect(scheduling.setSlotCapacity({ slot: "nope", capacity: 2 })).rejects.toThrow(SlotNotFound);
+        expect((await scheduling._slot({ slot }))[0]!.capacity).toBe(2);
+        expect(await scheduling._slotAssignees({ slot })).toHaveLength(2);
+    });
+
+    test("a published shift's capacity can be changed on its own, with the same limits", async () => {
+        const slot = await mondaySlot(1);
+        await scheduling.assignSlot({ slot, user: "ari" });
+        const shift = await onlyShiftOfPublishedWeek();
+
+        await scheduling.setShiftCapacity({ shift, capacity: 3 });
+        expect((await scheduling._shift({ shift }))[0]!.capacity).toBe(3);
+        // the template is unchanged
+        expect((await scheduling._slot({ slot }))[0]!.capacity).toBe(1);
+        // now there's room for another person
+        await scheduling.assign({ shift, user: "bea" });
+
+        await expect(scheduling.setShiftCapacity({ shift, capacity: 1 })).rejects.toThrow(
+            "More people are on this shift than that. Unassign someone first.",
+        );
+        await expect(scheduling.setShiftCapacity({ shift, capacity: -1 })).rejects.toThrow(InvalidCapacity);
+        await expect(scheduling.setShiftCapacity({ shift: "nope", capacity: 2 })).rejects.toThrow(ShiftNotFound);
+        expect((await scheduling._shift({ shift }))[0]!.capacity).toBe(3);
     });
 
     test("deleting a slot removes it from the template", async () => {

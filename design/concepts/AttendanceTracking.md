@@ -17,8 +17,8 @@ external User
 external Event
   Something a person is expected to attend, such as a shift.
 
-Status is PRESENT or ABSENT or LATE
-  The attendance outcomes a record can hold.
+Status is PRESENT or ABSENT or LATE or EXCUSED
+  The attendance outcomes a record can hold. EXCUSED is an absence that was agreed to, so it isn't counted against the attendee.
 ```
 
 ## State

@@ -14,6 +14,9 @@ It's a tool for courses to manage scheduling, attendance, covers, and schedule s
 - You can read the updated user journey and watch the updated demo video [here](milestones/p3/user_journey.md)
 - You can see the visual design study [here](milestones/p3/visual_design_study.md)
 
+## P4
+- You can read the final design document and watch the final demo video [here](milestones/p4/final_design_document.md)
+
 ## Running the tests
 
 The tests use Bun and a local DB.

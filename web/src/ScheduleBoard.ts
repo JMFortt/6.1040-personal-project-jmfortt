@@ -1,4 +1,4 @@
-import { computed, defineComponent, ref, type PropType } from "vue/dist/vue.esm-bundler.js";
+import { computed, defineComponent, ref, watch, type PropType } from "vue/dist/vue.esm-bundler.js";
 import { DAYS, hourLabel } from "./time.ts";
 
 export interface Person {
@@ -10,9 +10,6 @@ export interface Person {
 export interface Member extends Person {
     role?: string;
 }
-
-// chip color per role, so who's on a shift reads at a glance
-const ROLE_CLASS: Record<string, string> = { LA: "role-la", TA: "role-ta", STAFF: "role-staff" };
 
 // one slot (template) or shift (published week), already placed in the week
 export interface Block {
@@ -41,8 +38,14 @@ export const ScheduleBoard = defineComponent({
         // the viewer's user id; with greyOthers, blocks they aren't on are greyed out (used for LAs)
         me: { type: String, default: "" },
         greyOthers: { type: Boolean, default: false },
+        // on a published week: each block's attendance records, by block id. When given, chips are
+        // colored by attendance status (the more useful thing there), with the role as a small label
+        attendance: {
+            type: Object as PropType<Record<string, { user: string; status: string }[]> | null>,
+            default: null,
+        },
     },
-    emits: ["assign", "unassign", "remove", "add", "select"],
+    emits: ["assign", "unassign", "remove", "add", "select", "capacity"],
     setup(props, { emit }) {
         const selectedId = ref<string | null>(null);
         const selected = computed(() => props.blocks.find((b) => b.id === selectedId.value) ?? null);
@@ -57,13 +60,35 @@ export const ScheduleBoard = defineComponent({
             return b.assignees.some((a) => a.user === props.me);
         }
 
+        // greyed out: on a published week, any shift you're not on; on the template, only for LAs
         function isOther(b: Block) {
-            return props.greyOthers && !isMine(b);
+            return (props.greyOthers || props.attendance !== null) && !isMine(b);
         }
 
-        function roleClass(user: string) {
-            const role = props.roster.find((m) => m.user === user)?.role ?? "";
-            return ROLE_CLASS[role] ?? "";
+        // on a published week, a shift you're on is colored by your own attendance on it
+        function blockStatus(b: Block) {
+            if (props.attendance === null || !isMine(b)) return "";
+            const status = props.attendance[b.id]?.find((r) => r.user === props.me)?.status;
+            return status ? `status-${status.toLowerCase()}` : "";
+        }
+
+        function roleOf(user: string) {
+            return props.roster.find((m) => m.user === user)?.role ?? "";
+        }
+
+        const byStatus = computed(() => props.attendance !== null);
+
+        // a chip in the detail panel: colored by attendance status on a published week, neutral otherwise
+        function chipClass(blockId: string, user: string) {
+            if (!byStatus.value) return "";
+            const status = props.attendance?.[blockId]?.find((r) => r.user === user)?.status;
+            return status ? `status-${status.toLowerCase()}` : "status-none";
+        }
+
+        // who's on a block, as one line of text; the block cuts it off with "…" if it doesn't fit,
+        // and the full list shows as a tooltip on hover (and as chips in the panel on click)
+        function namesOf(b: Block) {
+            return b.assignees.map((a) => a.username).join(", ");
         }
 
         // show at least 9 AM-5 PM, stretched to fit every block
@@ -97,11 +122,6 @@ export const ScheduleBoard = defineComponent({
             };
         }
 
-        // the block's own time, e.g. "3–5 PM"
-        function hoursOf(b: Block) {
-            return `${hourLabel(b.startHour)}–${hourLabel(b.endHour)}`;
-        }
-
         function timeRange(b: Block) {
             return `${props.dayLabels[b.day]} ${hourLabel(b.startHour)}–${hourLabel(b.endHour)}`;
         }
@@ -118,6 +138,32 @@ export const ScheduleBoard = defineComponent({
             if (selected.value === null || member.value === "") return;
             emit("assign", selected.value.id, member.value);
             member.value = "";
+        }
+
+        // editing the selected block's capacity; starts at its current capacity whenever a block is picked
+        const newCapacity = ref(1);
+        const capacityError = ref("");
+        watch(
+            () => selected.value?.id,
+            () => {
+                newCapacity.value = selected.value?.capacity ?? 1;
+                capacityError.value = "";
+            },
+            { immediate: true },
+        );
+
+        // checked here too so the user doesn't wait on a request that's sure to fail
+        function saveCapacity() {
+            const block = selected.value;
+            if (block === null) return;
+            capacityError.value = "";
+            if (!Number.isInteger(newCapacity.value) || newCapacity.value < 1) {
+                capacityError.value = "Capacity must be a whole number, at least 1.";
+            } else if (newCapacity.value < block.assignees.length) {
+                capacityError.value = `${block.assignees.length} people are on this shift. Unassign someone first.`;
+            } else {
+                emit("capacity", block.id, newCapacity.value);
+            }
         }
 
         // the add form; checked here so the user doesn't wait on a request that's sure to fail
@@ -142,7 +188,8 @@ export const ScheduleBoard = defineComponent({
         return {
             ROW_PX, DAYS, hours, columns, selected, selectedId, assignable, member,
             day, startHour, endHour, capacity, formError, hourOptions,
-            position, hoursOf, timeRange, hourLabel, assign, add, toggle, isMine, isOther, roleClass,
+            position, timeRange, hourLabel, assign, add, toggle, isMine, isOther, blockStatus,
+            chipClass, namesOf, roleOf, byStatus, newCapacity, capacityError, saveCapacity,
         };
     },
     template: `
@@ -159,23 +206,18 @@ export const ScheduleBoard = defineComponent({
                             v-for="p in column"
                             :key="p.block.id"
                             class="block"
-                            :class="{
-                                full: p.block.assignees.length >= p.block.capacity,
-                                mine: isMine(p.block),
+                            :class="[blockStatus(p.block), {
                                 other: isOther(p.block),
                                 selected: p.block.id === selectedId,
-                            }"
+                            }]"
                             :style="position(p)"
-                            :aria-label="timeRange(p.block) + ', ' + p.block.assignees.length + ' of ' + p.block.capacity + ' filled'"
+                            :aria-label="timeRange(p.block) + ', ' + p.block.assignees.length + (p.block.assignees.length === 1 ? ' person' : ' people')"
+                            :title="namesOf(p.block) || 'Nobody yet'"
                             @click="toggle(p.block.id)"
                         >
-                            <span class="block-time">{{ hoursOf(p.block) }}</span>
-                            <span class="chips">
-                                <span v-for="a in p.block.assignees" :key="a.user" class="chip" :class="roleClass(a.user)">{{ a.username }}</span>
-                            </span>
-                            <span class="block-count">
-                                {{ p.block.assignees.length }}/{{ p.block.capacity }}<template
-                                    v-if="p.block.assignees.length >= p.block.capacity"> ✓</template>
+                            <span class="block-head">
+                                <span class="block-names">{{ namesOf(p.block) }}</span>
+                                <span class="block-count" aria-hidden="true">{{ p.block.assignees.length }}</span>
                             </span>
                         </button>
                     </div>
@@ -183,22 +225,28 @@ export const ScheduleBoard = defineComponent({
             </div>
         </div>
         <div class="legend">
-            <span class="chip role-la">LA</span>
-            <span class="chip role-ta">TA</span>
-            <span class="chip role-staff">Staff</span>
-            <span class="legend-item"><span class="swatch mine"></span>Your shifts</span>
+            <template v-if="byStatus">
+                <span class="muted">Your attendance:</span>
+                <span class="legend-item"><span class="swatch status-present"></span>Present</span>
+                <span class="legend-item"><span class="swatch status-late"></span>Late</span>
+                <span class="legend-item"><span class="swatch status-absent"></span>Absent</span>
+                <span class="legend-item"><span class="swatch status-excused"></span>Excused</span>
+                <span class="legend-item"><span class="swatch"></span>Not marked</span>
+                <span class="legend-item"><span class="swatch other"></span>Not your shift</span>
+            </template>
+            <span v-else-if="greyOthers" class="legend-item"><span class="swatch other"></span>Not your shift</span>
             <span class="muted">Click a block for details.</span>
         </div>
 
         <div v-if="selected" class="panel">
             <div class="card-head">
                 <h3>{{ timeRange(selected) }}</h3>
-                <span class="muted">{{ selected.assignees.length }} of {{ selected.capacity }} filled</span>
+                <span class="muted">{{ selected.assignees.length }} of {{ selected.capacity }} spots filled</span>
             </div>
             <p v-if="selected.assignees.length === 0" class="muted">Nobody yet.</p>
             <div v-else class="chips">
-                <span v-for="a in selected.assignees" :key="a.user" class="chip" :class="roleClass(a.user)">
-                    {{ a.username }}
+                <span v-for="a in selected.assignees" :key="a.user" class="chip" :class="chipClass(selected.id, a.user)">
+                    {{ a.username }}<span v-if="byStatus && roleOf(a.user)" class="chip-role">· {{ roleOf(a.user) }}</span>
                     <button
                         v-if="canEdit"
                         class="chip-remove"
@@ -218,6 +266,15 @@ export const ScheduleBoard = defineComponent({
                 </template>
                 <button class="danger" :disabled="busy" @click="$emit('remove', selected.id)">Delete</button>
             </div>
+            <form v-if="canEdit" class="inline-form" @submit.prevent="saveCapacity">
+                <label>Capacity
+                    <input v-model.number="newCapacity" type="number" min="1" step="1" />
+                </label>
+                <div class="buttons">
+                    <button type="submit" :disabled="busy || newCapacity === selected.capacity">Save capacity</button>
+                </div>
+            </form>
+            <p v-if="capacityError" class="error">{{ capacityError }}</p>
             <!-- pages can add more to the panel here (the week page adds attendance) -->
             <slot name="panel" :block="selected"></slot>
         </div>

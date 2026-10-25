@@ -359,6 +359,17 @@ export type TAbleWire = {
     };
     error: { error: AppWideError | "ALREADY_ASSIGNED" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_IN_CLASS" | "NOT_LOGGED_IN" | "NO_SUCH_SHIFT" | "SHIFT_FULL" | "SHIFT_NOT_FOUND" };
   };
+  "/schedule/shifts/capacity": {
+    input: {
+      "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setShiftCapacity"]>[0], ["capacity"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setShiftCapacity"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setShiftCapacity"]>[0], ["shift"]>>;
+    };
+    error: { error: AppWideError | "CAPACITY_BELOW_ASSIGNED" | "INVALID_CAPACITY" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_SHIFT" | "SHIFT_NOT_FOUND" };
+  };
   "/schedule/shifts/create": {
     input: {
       "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["capacity"]>>;
@@ -403,6 +414,17 @@ export type TAbleWire = {
       "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assignSlot"]>[0], ["slot"]>>;
     };
     error: { error: AppWideError | "ALREADY_ASSIGNED" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_IN_CLASS" | "NOT_LOGGED_IN" | "NO_SUCH_SLOT" | "SHIFT_FULL" | "SLOT_NOT_FOUND" };
+  };
+  "/schedule/slots/capacity": {
+    input: {
+      "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setSlotCapacity"]>[0], ["capacity"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "slot": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setSlotCapacity"]>[0], ["slot"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slot"]>[0], ["slot"]>]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setSlotCapacity"]>[0], ["slot"]>>;
+    };
+    error: { error: AppWideError | "CAPACITY_BELOW_ASSIGNED" | "INVALID_CAPACITY" | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" | "NO_SUCH_SLOT" | "SLOT_NOT_FOUND" };
   };
   "/schedule/slots/create": {
     input: {
@@ -880,6 +902,17 @@ export type TAbleWireHttp = {
     };
     error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
   };
+  "/schedule/shifts/capacity": {
+    input: {
+      "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setShiftCapacity"]>[0], ["capacity"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "shift": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setShiftCapacity"]>[0], ["shift"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shift"]>[0], ["shift"]>]>>;
+    };
+    output: {
+      "shift": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setShiftCapacity"]>[0], ["shift"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
   "/schedule/shifts/create": {
     input: {
       "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["createShift"]>[0], ["capacity"]>>;
@@ -922,6 +955,17 @@ export type TAbleWireHttp = {
     };
     output: {
       "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["assignSlot"]>[0], ["slot"]>>;
+    };
+    error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
+  };
+  "/schedule/slots/capacity": {
+    input: {
+      "capacity": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setSlotCapacity"]>[0], ["capacity"]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+      "slot": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setSlotCapacity"]>[0], ["slot"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_slot"]>[0], ["slot"]>]>>;
+    };
+    output: {
+      "slot": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["setSlotCapacity"]>[0], ["slot"]>>;
     };
     error: { error: HttpAppWideError | "CONFLICT" | "FORBIDDEN" | "INVALID_REQUEST" | "NOT_FOUND" | "UNAUTHORIZED" };
   };

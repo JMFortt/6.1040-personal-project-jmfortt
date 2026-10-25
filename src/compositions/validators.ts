@@ -62,9 +62,18 @@ export const renameInput = validator(
 );
 
 export const markInput = validator(
-    (value) => strings(value, ["session", "shift", "member"]) && ["PRESENT", "ABSENT", "LATE"].includes(value.status as string),
-    "the status must be PRESENT, ABSENT, or LATE",
+    (value) =>
+        strings(value, ["session", "shift", "member"]) && ["PRESENT", "ABSENT", "LATE", "EXCUSED"].includes(value.status as string),
+    "the status must be PRESENT, ABSENT, LATE, or EXCUSED",
 );
+
+// { session, <id>, capacity }: ShiftScheduling itself refuses a capacity below 1 or below how many are on it
+export function capacityInput(key: string) {
+    return validator(
+        (value) => strings(value, ["session", key]) && Number.isInteger(value.capacity),
+        "capacity must be a whole number",
+    );
+}
 
 // for endpoints that take a session plus some ids, like { session, shift, member }
 export function idsInput(...keys: string[]) {

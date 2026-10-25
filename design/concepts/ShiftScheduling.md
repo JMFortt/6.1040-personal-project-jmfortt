@@ -94,6 +94,21 @@ unassignSlot(slot: Slot, user: User) : returns ()
   then
     refuses NOT_ASSIGNED "That user is not assigned to this shift."
 
+setSlotCapacity(slot: Slot, capacity: Number) : returns ()
+  where slot exists, capacity is at least 1, and capacity is at least the number of users assigned to slot
+  then
+    set the capacity of slot to capacity
+    returns
+  where slot does not exist
+  then
+    refuses SLOT_NOT_FOUND "There is no such slot."
+  where slot exists and capacity is less than 1
+  then
+    refuses INVALID_CAPACITY "The shift's capacity must be at least 1."
+  where slot exists, capacity is at least 1, and fewer than the number of users assigned to slot
+  then
+    refuses CAPACITY_BELOW_ASSIGNED "More people are on this shift than that. Unassign someone first."
+
 publishWeek(context: Context, start: DateTime, name: String) : returns (week: Week)
   where no week in context has the given start
   then
@@ -171,6 +186,21 @@ unassign(shift: Shift, user: User) : returns ()
   where shift exists and user is not assigned to shift
   then
     refuses NOT_ASSIGNED "That user is not assigned to this shift."
+
+setShiftCapacity(shift: Shift, capacity: Number) : returns ()
+  where shift exists, capacity is at least 1, and capacity is at least the number of users assigned to shift
+  then
+    set the capacity of shift to capacity
+    returns
+  where shift does not exist
+  then
+    refuses SHIFT_NOT_FOUND "There is no such shift."
+  where shift exists and capacity is less than 1
+  then
+    refuses INVALID_CAPACITY "The shift's capacity must be at least 1."
+  where shift exists, capacity is at least 1, and fewer than the number of users assigned to shift
+  then
+    refuses CAPACITY_BELOW_ASSIGNED "More people are on this shift than that. Unassign someone first."
 
 reassign(shift: Shift, from: User, to: User) : returns ()
   where shift exists, from is assigned to shift, and to is not

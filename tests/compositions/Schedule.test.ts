@@ -116,6 +116,42 @@ describe("Schedule", () => {
         expect(await post("/schedule/week", { session: outsider.session, week })).toEqual(FORBIDDEN);
     });
 
+    test("TAs can change slot and shift capacities, within limits; LAs can't", async () => {
+        const { group, ta, la } = await staffedClass("capacity");
+        const { slot } = await post("/schedule/slots/create", { session: ta.session, group, ...SLOT });
+        await post("/schedule/slots/assign", { session: ta.session, slot, member: la.user });
+
+        expect(await post("/schedule/slots/capacity", { session: ta.session, slot, capacity: 3 })).toEqual({ slot });
+        expect((await post("/schedule/template", { session: ta.session, group })).template[0].capacity).toBe(3);
+
+        const { week } = await post("/schedule/weeks/publish", { session: ta.session, group, start: WEEK, name: "Week" });
+        const shift = (await post("/schedule/week", { session: ta.session, week })).week.shifts[0].shift;
+        expect(await post("/schedule/shifts/capacity", { session: ta.session, shift, capacity: 1 })).toEqual({ shift });
+
+        expect(await post("/schedule/shifts/capacity", { session: la.session, shift, capacity: 5 })).toEqual({ error: "FORBIDDEN" });
+        expect(await post("/schedule/slots/capacity", { session: la.session, slot, capacity: 5 })).toEqual({ error: "FORBIDDEN" });
+        // below 1, or not a whole number, is refused
+        expect(await post("/schedule/shifts/capacity", { session: ta.session, shift, capacity: 0 })).toEqual({
+            error: "INVALID_REQUEST",
+        });
+        expect(await post("/schedule/shifts/capacity", { session: ta.session, shift, capacity: 1.5 })).toEqual({
+            error: "INVALID_REQUEST",
+        });
+        expect(await post("/schedule/shifts/capacity", { session: ta.session, shift: "made-up", capacity: 2 })).toEqual({
+            error: "NOT_FOUND",
+        });
+    });
+
+    test("a capacity below the number of people already on the shift is refused", async () => {
+        const { group, ta, la } = await staffedClass("below");
+        const { slot } = await post("/schedule/slots/create", { session: ta.session, group, ...SLOT });
+        await post("/schedule/slots/assign", { session: ta.session, slot, member: la.user });
+        await post("/schedule/slots/assign", { session: ta.session, slot, member: ta.user });
+
+        expect(await post("/schedule/slots/capacity", { session: ta.session, slot, capacity: 1 })).toEqual({ error: "CONFLICT" });
+        expect((await post("/schedule/template", { session: ta.session, group })).template[0].capacity).toBe(2);
+    });
+
     test("bad edits are refused with informative errors", async () => {
         const { group, ta, la } = await staffedClass("bad");
         const INVALID = { error: "INVALID_REQUEST" };

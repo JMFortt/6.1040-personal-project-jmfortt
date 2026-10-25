@@ -9,6 +9,7 @@ export class ShiftNotFound extends Error { }
 export class AlreadyAssigned extends Error { }
 export class ShiftFull extends Error { }
 export class NotAssigned extends Error { }
+export class CapacityBelowAssigned extends Error { }
 
 const WEEKDAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
@@ -73,6 +74,20 @@ async function removeAssignee<T extends Assignable>(collection: Collection<T>, _
     throw new NotAssigned("That user is not assigned to this shift.");
 }
 
+// change a slot's or shift's capacity, but never below how many people are already on it; the check
+// and the change are one update, so an assign arriving at the same moment can't sneak past it
+async function setCapacity<T extends Assignable>(collection: Collection<T>, _id: string, capacity: number, notFound: () => Error) {
+    if ((await collection.findOne({ _id } as Filter<T>)) === null) throw notFound();
+    if (!(capacity >= 1)) throw new InvalidCapacity("The shift's capacity must be at least 1.");
+    const result = await collection.updateOne(
+        { _id, $expr: { $lte: [{ $size: "$assignees" }, capacity] } } as unknown as Filter<T>,
+        { $set: { capacity } } as unknown as UpdateFilter<T>,
+    );
+    if (result.matchedCount === 0) {
+        throw new CapacityBelowAssigned("More people are on this shift than that. Unassign someone first.");
+    }
+}
+
 const slotNotFound = () => new SlotNotFound("There is no such slot.");
 const shiftNotFound = () => new ShiftNotFound("There is no such shift.");
 
@@ -130,6 +145,11 @@ export class ShiftSchedulingConcept {
 
     async unassignSlot({ slot, user }: { slot: string; user: string }) {
         await removeAssignee(this.slots, slot, user, slotNotFound);
+        return {};
+    }
+
+    async setSlotCapacity({ slot, capacity }: { slot: string; capacity: number }) {
+        await setCapacity(this.slots, slot, capacity, slotNotFound);
         return {};
     }
 
@@ -225,6 +245,11 @@ export class ShiftSchedulingConcept {
 
     async unassign({ shift, user }: { shift: string; user: string }) {
         await removeAssignee(this.shifts, shift, user, shiftNotFound);
+        return {};
+    }
+
+    async setShiftCapacity({ shift, capacity }: { shift: string; capacity: number }) {
+        await setCapacity(this.shifts, shift, capacity, shiftNotFound);
         return {};
     }
 

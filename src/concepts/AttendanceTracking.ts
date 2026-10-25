@@ -2,7 +2,7 @@ import { type Collection, type Db } from "mongodb";
 
 export class NoRecord extends Error { }
 
-export type Status = "PRESENT" | "ABSENT" | "LATE";
+export type Status = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 
 interface AttendanceRecord {
     _id: string;

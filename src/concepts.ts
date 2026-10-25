@@ -16,6 +16,7 @@ import sessioningSpec from "@design/concepts/Sessioning.md" with { type: "text" 
 import shiftSchedulingSpec from "@design/concepts/ShiftScheduling.md" with { type: "text" };
 import {
     AlreadyAssigned,
+    CapacityBelowAssigned,
     InvalidCapacity,
     InvalidTimes,
     NotAssigned,
@@ -88,6 +89,7 @@ const shiftScheduling = registerConcept({
         ALREADY_ASSIGNED: AlreadyAssigned,
         SHIFT_FULL: ShiftFull,
         NOT_ASSIGNED: NotAssigned,
+        CAPACITY_BELOW_ASSIGNED: CapacityBelowAssigned,
     },
 });
 

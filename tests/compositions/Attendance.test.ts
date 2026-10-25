@@ -64,6 +64,8 @@ describe("Attendance", () => {
         await post("/attendance/mark", { session: ta.session, shift, member: la.user, status: "PRESENT" });
         await post("/attendance/mark", { session: ta.session, shift, member: la.user, status: "LATE" });
         expect((await post("/attendance/mine", { session: la.session, group })).records[0].status).toBe("LATE");
+        await post("/attendance/mark", { session: ta.session, shift, member: la.user, status: "EXCUSED" });
+        expect((await post("/attendance/mine", { session: la.session, group })).records[0].status).toBe("EXCUSED");
 
         expect(await post("/attendance/unmark", { session: ta.session, shift, member: la.user })).toEqual({ shift });
         expect((await post("/attendance/mine", { session: la.session, group })).records[0].status).toBeNull();

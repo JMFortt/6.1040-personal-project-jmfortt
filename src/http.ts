@@ -24,6 +24,7 @@ export const policy = httpPolicy({
         ALREADY_ASSIGNED: "CONFLICT",
         SHIFT_FULL: "CONFLICT",
         NOT_ASSIGNED: "NOT_FOUND",
+        CAPACITY_BELOW_ASSIGNED: "CONFLICT",
         NO_RECORD: "NOT_FOUND",
         ACTIVE_REQUEST_EXISTS: "CONFLICT",
         REQUEST_NOT_FOUND: "NOT_FOUND",

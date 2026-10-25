@@ -109,6 +109,11 @@ export const ScheduleSection = defineComponent({
         const unassignSlot = (slot: string, member: string) =>
             edit((session) => client.schedule.slots.unassign({ session, slot, member }));
         const deleteSlot = (slot: string) => edit((session) => client.schedule.slots.delete({ session, slot }));
+        const setSlotCapacity = (slot: string, capacity: number) =>
+            edit((session) => client.schedule.slots.capacity({ session, slot, capacity }), {
+                CONFLICT: "More people are on this shift than that. Unassign someone first.",
+                INVALID_REQUEST: "Capacity must be a whole number, at least 1.",
+            });
         const addSlot = (b: { day: number; startHour: number; endHour: number; capacity: number }) =>
             edit(
                 (session) =>
@@ -163,7 +168,7 @@ export const ScheduleSection = defineComponent({
         return {
             tab, weekDeleted,
             canEdit, isLA, roster, weeks, loading, loadError, load,
-            blocks, scheduleError, scheduleBusy, assignSlot, unassignSlot, deleteSlot, addSlot,
+            blocks, scheduleError, scheduleBusy, assignSlot, unassignSlot, deleteSlot, addSlot, setSlotCapacity,
             publishDate, publishName, publishError, publishing, publish, dateLabel,
         };
     },
@@ -220,6 +225,7 @@ export const ScheduleSection = defineComponent({
                     @unassign="unassignSlot"
                     @remove="deleteSlot"
                     @add="addSlot"
+                    @capacity="setSlotCapacity"
                 />
             </section>
 

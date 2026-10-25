@@ -34,7 +34,6 @@ export const App = defineComponent({
         const logoutError = ref("");
         const loggingOut = ref(false);
 
-        const initials = computed(() => (username.value ?? "").slice(0, 2).toUpperCase());
         const sectionLabel = computed(() => SECTIONS.find((s) => s.id === section.value)?.label ?? "");
 
         // if a session was saved earlier, ask the backend whether it's still valid
@@ -107,7 +106,7 @@ export const App = defineComponent({
         }
 
         return {
-            SECTIONS, username, me, initials, checking, notice, openClass, section, sectionLabel,
+            SECTIONS, username, me, checking, notice, openClass, section, sectionLabel,
             logoutError, loggingOut, loggedIn, loggedOut, logout, showClasses, openClassPage, go,
         };
     },
@@ -116,8 +115,8 @@ export const App = defineComponent({
         <LoginPage v-else-if="username === null" :notice="notice" @logged-in="loggedIn" />
         <template v-else>
             <header class="topbar">
-                <button class="brand" @click="showClasses">
-                    <span class="logo">TA</span>TAble
+                <button class="brand" aria-label="TAble, go to my classes" @click="showClasses">
+                    <span class="wordmark"><b>TA</b>ble</span>
                 </button>
                 <nav class="crumbs">
                     <button class="crumb" @click="showClasses">Classes</button>
@@ -129,7 +128,6 @@ export const App = defineComponent({
                     </template>
                 </nav>
                 <div class="user">
-                    <span class="avatar">{{ initials }}</span>
                     <span class="username">{{ username }}</span>
                     <button class="on-dark" :disabled="loggingOut" @click="logout">Log out</button>
                 </div>

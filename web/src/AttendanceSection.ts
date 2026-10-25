@@ -30,7 +30,8 @@ interface RecordRow {
     status: string;
 }
 
-const STATUSES = ["PRESENT", "LATE", "ABSENT"];
+const STATUSES = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
+type Status = "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
 
 // a class's attendance: taking it for shifts happening now, marking any past shift, and your own record
 export const AttendanceSection = defineComponent({
@@ -92,6 +93,7 @@ export const AttendanceSection = defineComponent({
             present: mine.value.filter((r) => r.status === "PRESENT").length,
             late: mine.value.filter((r) => r.status === "LATE").length,
             absent: mine.value.filter((r) => r.status === "ABSENT").length,
+            excused: mine.value.filter((r) => r.status === "EXCUSED").length,
             unmarked: mine.value.filter((r) => r.status === null).length,
         }));
 
@@ -193,7 +195,7 @@ export const AttendanceSection = defineComponent({
                 (session) =>
                     status === ""
                         ? client.attendance.unmark({ session, shift, member })
-                        : client.attendance.mark({ session, shift, member, status: status as "PRESENT" | "ABSENT" | "LATE" }),
+                        : client.attendance.mark({ session, shift, member, status: status as Status }),
                 {
                     FORBIDDEN: "Only TAs and staff can take attendance.",
                     INVALID_REQUEST: "They aren't on this shift.",
@@ -322,6 +324,7 @@ export const AttendanceSection = defineComponent({
                     <div class="stat"><span class="stat-number present">{{ counts.present }}</span>Present</div>
                     <div class="stat"><span class="stat-number late">{{ counts.late }}</span>Late</div>
                     <div class="stat"><span class="stat-number absent">{{ counts.absent }}</span>Absent</div>
+                    <div class="stat"><span class="stat-number excused">{{ counts.excused }}</span>Excused</div>
                     <div class="stat"><span class="stat-number">{{ counts.unmarked }}</span>Not marked</div>
                 </div>
                 <p v-if="mine.length === 0" class="muted">You haven't been on any published shifts yet.</p>

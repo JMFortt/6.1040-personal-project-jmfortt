@@ -86,7 +86,17 @@ export const WeekPage = defineComponent({
                 shifts.value = weekResult.week.shifts;
                 if (!("error" in rosterResult)) roster.value = rosterResult.roster;
                 if (renameTo.value === "") renameTo.value = name.value;
-                if (selectedShift.value !== null) await loadAttendance(selectedShift.value);
+                // every shift's attendance, so the grid can color each person by their status
+                const records = await Promise.all(
+                    shifts.value.map((s) => client.attendance.shift({ session, shift: s.shift })),
+                );
+                if (records.some(loggedOutBy)) return sessionExpired();
+                const next: Record<string, AttendanceRow[]> = {};
+                shifts.value.forEach((s, i) => {
+                    const result = records[i]!;
+                    if (!("error" in result)) next[s.shift] = result.records;
+                });
+                attendance.value = next;
             } catch {
                 loadError.value = UNREACHABLE;
             } finally {
@@ -113,6 +123,11 @@ export const WeekPage = defineComponent({
         const unassignShift = (shift: string, member: string) =>
             edit((session) => client.schedule.shifts.unassign({ session, shift, member }));
         const deleteShift = (shift: string) => edit((session) => client.schedule.shifts.delete({ session, shift }));
+        const setShiftCapacity = (shift: string, capacity: number) =>
+            edit((session) => client.schedule.shifts.capacity({ session, shift, capacity }), {
+                CONFLICT: "More people are on this shift than that. Unassign someone first.",
+                INVALID_REQUEST: "Capacity must be a whole number, at least 1.",
+            });
         const addShift = (b: { day: number; startHour: number; endHour: number; capacity: number }) =>
             edit(
                 (session) =>
@@ -165,7 +180,7 @@ export const WeekPage = defineComponent({
                 (session) =>
                     status === ""
                         ? client.attendance.unmark({ session, shift, member })
-                        : client.attendance.mark({ session, shift, member, status: status as "PRESENT" | "ABSENT" | "LATE" }),
+                        : client.attendance.mark({ session, shift, member, status: status as "PRESENT" | "ABSENT" | "LATE" | "EXCUSED" }),
                 {
                     FORBIDDEN: "Only TAs and staff can take attendance.",
                     INVALID_REQUEST: "They aren't on this shift.",
@@ -271,9 +286,9 @@ export const WeekPage = defineComponent({
         return {
             covers, coverError, coverBusy, nameOf, isOn, myActiveRequest, canClaim, hoursLabel,
             requestCover, claim, approve, deny, withdraw, ACTIVE,
-            isLA, select, statusOf, setStatus, attendanceError, attendanceBusy,
+            isLA, select, statusOf, setStatus, attendance, attendanceError, attendanceBusy,
             canEdit, name, start, roster, loading, loadError, load, dayLabels, blocks, dateLabel,
-            scheduleError, scheduleBusy, assignShift, unassignShift, deleteShift, addShift,
+            scheduleError, scheduleBusy, assignShift, unassignShift, deleteShift, addShift, setShiftCapacity,
             renameTo, weekError, weekBusy, rename, deleteWeek,
         };
     },
@@ -300,10 +315,12 @@ export const WeekPage = defineComponent({
                 :busy="scheduleBusy"
                 :me="me"
                 :grey-others="isLA"
+                :attendance="attendance"
                 @assign="assignShift"
                 @unassign="unassignShift"
                 @remove="deleteShift"
                 @add="addShift"
+                @capacity="setShiftCapacity"
                 @select="select"
             >
                 <template #panel="{ block }">
@@ -319,8 +336,9 @@ export const WeekPage = defineComponent({
                             >
                                 <option value="">not marked</option>
                                 <option>PRESENT</option>
-                                <option>ABSENT</option>
                                 <option>LATE</option>
+                                <option>ABSENT</option>
+                                <option>EXCUSED</option>
                             </select>
                         </div>
                     </template>
