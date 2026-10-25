@@ -2,7 +2,7 @@
 
 Hello! This is my 6.1040 personal project "TAble".
 
-It's a tool for courses to manage scheduling, attendance, covers, and schedule swaps for student workers in classes with labs or office hours.
+It's a tool for courses to manage scheduling, attendance, and covers for student workers in classes with labs or office hours.
 
 It's deployed at [table.mit-sdg.dev](https://table.mit-sdg.dev/).
 
@@ -10,7 +10,7 @@ It's deployed at [table.mit-sdg.dev](https://table.mit-sdg.dev/).
 - You can see the design documentation for TAble [here](milestones/p1/design_doc.md).
 
 ## P2
-- You can read the MVP documentaion and watch the demo video [here](milestones/p2/user_journey.md)
+- You can read the MVP documentation and watch the demo video [here](milestones/p2/user_journey.md)
 
 ## P3
 - You can read the updated user journey and watch the updated demo video [here](milestones/p3/user_journey.md)
@@ -19,9 +19,18 @@ It's deployed at [table.mit-sdg.dev](https://table.mit-sdg.dev/).
 ## P4
 - You can read the final design document and watch the final demo video [here](milestones/p4/final_design_document.md)
 
+- You can read the final concept specifications [here](design/concepts/) and the final compositions (endpoints, reactions, and access rules) [here](design/compositions/)
+
 ## Setting up the app locally
 
-This repo has all that you need to run TAble locally on your computer. Pull the latest commit, install any needed dependencies with `bun install`, and run `bun run dev` to spin it up locally and try it out yourself.
+This repo has all that you need to run TAble locally on your computer.
+
+1. Pull the latest commit in this repo
+2. Install dependencies: `bun install`
+3. Copy `.env.example` to `.env`
+4. Start MongoDB in a container (needs Podman running): `bun run db:up`
+5. Run `bun run dev` to spin it up locally and try it out yourself.
+6. Open the site at [http://localhost:3000](http://localhost:3000)
 
 ## Running the tests locally
 
