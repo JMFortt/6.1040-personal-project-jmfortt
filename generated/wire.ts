@@ -14,6 +14,22 @@ export type Json = null | boolean | number | string | Json[] | { [key: string]: 
 export type AppWideError = never;
 
 export type TAbleWire = {
+  "/attendance/class": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "records": ({
+        "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+        "shift": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>[0], ["event"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>[0], ["shift"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>>>, ["status"]>> | null;
+        "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>]>>;
+      })[];
+    };
+    error: { error: AppWideError | "INVALID_INPUT" | "NOT_ALLOWED" | "NOT_LOGGED_IN" };
+  };
   "/attendance/mark": {
     input: {
       "member": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>]>>;
@@ -557,6 +573,22 @@ export type TAbleWire = {
 export type HttpAppWideError = never;
 
 export type TAbleWireHttp = {
+  "/attendance/class": {
+    input: {
+      "group": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["RoleBasedAccessing"]["_role"]>[0], ["group"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_weeks"]>[0], ["context"]>]>>;
+      "session": Jsonify<AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["Sessioning"]["current"]>[0], ["session"]>>;
+    };
+    output: {
+      "records": ({
+        "end": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["end"]>>;
+        "shift": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>[0], ["event"]>, AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>[0], ["shift"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["shift"]>]>>;
+        "start": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_shiftsInWeek"]>>>, ["start"]>>;
+        "status": Jsonify<AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>>>, ["status"]>> | null;
+        "user": Jsonify<AllOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["_record"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>]>>;
+      })[];
+    };
+    error: { error: HttpAppWideError | "FORBIDDEN" | "INVALID_REQUEST" | "UNAUTHORIZED" };
+  };
   "/attendance/mark": {
     input: {
       "member": Jsonify<OneOf<[AtPath<Parameters<(typeof ApplicationConceptSet.concepts)["AttendanceTracking"]["mark"]>[0], ["user"]>, AtPath<QueryRow<Awaited<ReturnType<(typeof ApplicationConceptSet.concepts)["ShiftScheduling"]["_assignees"]>>>, ["user"]>]>>;

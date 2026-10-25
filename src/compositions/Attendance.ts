@@ -39,6 +39,21 @@ const MyRecords = former(
             .form({ shift, start, end, status }),
 );
 
+// every person on every shift in a class, in time order, with their status (null if not marked yet),
+// for the analytics page
+const ClassRecords = former(
+    "the attendance in (group)",
+    ({ group }, { week, shift, start, end, member, status }) =>
+        each(ShiftScheduling._weeks({ context: group }).is({ week }))
+            .where(
+                ShiftScheduling._shiftsInWeek({ week }).is({ shift, start, end }),
+                ShiftScheduling._assignees({ shift }).is({ user: member }),
+                whether(AttendanceTracking._record({ user: member, event: shift }).is({ status })),
+            )
+            .arranged(start)
+            .form({ shift, start, end, user: member, status }),
+);
+
 // --- endpoints ---
 
 // only someone assigned to the shift can be marked
@@ -127,4 +142,19 @@ const Mine = endpoint(
     { input: { required: ["session", "group"] }, validators: { input: idsInput("group") } },
 );
 
-export const composition = { ShiftRecords, OwnShiftRecord, MyRecords, Mark, Unmark, ForShift, Mine };
+// TAs and staff only: everyone's attendance across the class
+const ForClass = endpoint(
+    "/attendance/class",
+    ({ session, group, user }) =>
+        receive({ session, group })
+            .then(Sessioning.current({ session }).responds({ user }))
+            .then(
+                where(MayViewAllAttendance({ user, group }))
+                    .then(respond({ records: ClassRecords({ group }) }))
+                    .named("allowed"),
+                where(no(MayViewAllAttendance({ user, group }))).then(respond({ error: "NOT_ALLOWED" })).named("not-allowed"),
+            ),
+    { input: { required: ["session", "group"] }, validators: { input: idsInput("group") } },
+);
+
+export const composition = { ClassRecords, ForClass, ShiftRecords, OwnShiftRecord, MyRecords, Mark, Unmark, ForShift, Mine };

@@ -157,6 +157,34 @@ td.actions {
     text-align: right;
 }
 
+/* number columns line up on the right */
+th.num,
+td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* nonzero counts in their status color */
+.count-present {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.count-late {
+    color: var(--amber);
+    font-weight: 500;
+}
+
+.count-absent {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.count-excused {
+    color: var(--baltic-blue);
+    font-weight: 500;
+}
+
 tr.pending td {
     color: var(--muted);
 }

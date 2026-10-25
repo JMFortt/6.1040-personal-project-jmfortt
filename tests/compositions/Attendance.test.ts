@@ -90,6 +90,32 @@ describe("Attendance", () => {
         expect(await post("/attendance/shift", { session: outsider.session, shift })).toEqual({ error: "FORBIDDEN" });
     });
 
+    test("TAs see everyone's attendance across the class; LAs and outsiders can't", async () => {
+        const { group, shift, ta, la, la2 } = await classWithShift("class");
+        await post("/attendance/mark", { session: ta.session, shift, member: la.user, status: "LATE" });
+
+        expect(await post("/attendance/class", { session: ta.session, group })).toEqual({
+            records: [
+                {
+                    shift,
+                    start: "2026-10-19T15:00:00.000Z",
+                    end: "2026-10-19T17:00:00.000Z",
+                    user: la.user,
+                    status: "LATE",
+                },
+            ],
+        });
+        // a second person on the shift shows up as not marked
+        await post("/schedule/shifts/assign", { session: ta.session, shift, member: la2.user });
+        const { records } = await post("/attendance/class", { session: ta.session, group });
+        expect(records).toHaveLength(2);
+        expect(records.find((r: { user: string }) => r.user === la2.user).status).toBeNull();
+
+        expect(await post("/attendance/class", { session: la.session, group })).toEqual({ error: "FORBIDDEN" });
+        const outsider = await register("class-outsider");
+        expect(await post("/attendance/class", { session: outsider.session, group })).toEqual({ error: "FORBIDDEN" });
+    });
+
     test("bad marks are refused with informative errors", async () => {
         const { shift, ta, la, la2 } = await classWithShift("bad");
         expect(await post("/attendance/mark", { session: ta.session, shift, member: la2.user, status: "PRESENT" })).toEqual({

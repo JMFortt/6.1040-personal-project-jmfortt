@@ -1,5 +1,6 @@
 import { computed, defineComponent, onMounted, ref } from "vue/dist/vue.esm-bundler.js";
 import { client, savedSession, saveSession, UNREACHABLE, type ClassRow } from "./api.ts";
+import { AnalyticsSection } from "./AnalyticsSection.ts";
 import { AttendanceSection } from "./AttendanceSection.ts";
 import { ClassesPage } from "./ClassesPage.ts";
 import { CoversSection } from "./CoversSection.ts";
@@ -7,18 +8,19 @@ import { LoginPage } from "./LoginPage.ts";
 import { MembersSection } from "./MembersSection.ts";
 import { ScheduleSection } from "./ScheduleSection.ts";
 
-// the sections of a class, in sidebar order
+// the sections of a class, in sidebar order; staffOnly ones only show for TAs and staff
 const SECTIONS = [
-    { id: "schedule", label: "Schedule" },
-    { id: "covers", label: "Cover requests" },
-    { id: "attendance", label: "Attendance" },
-    { id: "members", label: "Members" },
+    { id: "schedule", label: "Schedule", staffOnly: false },
+    { id: "covers", label: "Cover requests", staffOnly: false },
+    { id: "attendance", label: "Attendance", staffOnly: false },
+    { id: "analytics", label: "Analytics", staffOnly: true },
+    { id: "members", label: "Members", staffOnly: false },
 ] as const;
 type Section = (typeof SECTIONS)[number]["id"];
 
 // the login page, or (once logged in) the app shell: a top bar, a sidebar, and the current page
 export const App = defineComponent({
-    components: { AttendanceSection, ClassesPage, CoversSection, LoginPage, MembersSection, ScheduleSection },
+    components: { AnalyticsSection, AttendanceSection, ClassesPage, CoversSection, LoginPage, MembersSection, ScheduleSection },
     setup() {
         const username = ref<string | null>(null);
         // the logged-in user's id, so pages can tell which shifts are yours
@@ -35,6 +37,11 @@ export const App = defineComponent({
         const loggingOut = ref(false);
 
         const sectionLabel = computed(() => SECTIONS.find((s) => s.id === section.value)?.label ?? "");
+        // the sidebar's sections for the open class; the server still checks access on every request
+        const visibleSections = computed(() => {
+            const role = openClass.value?.role;
+            return SECTIONS.filter((s) => !s.staffOnly || role === "TA" || role === "STAFF");
+        });
 
         // if a session was saved earlier, ask the backend whether it's still valid
         onMounted(async () => {
@@ -106,7 +113,7 @@ export const App = defineComponent({
         }
 
         return {
-            SECTIONS, username, me, checking, notice, openClass, section, sectionLabel,
+            SECTIONS, visibleSections, username, me, checking, notice, openClass, section, sectionLabel,
             logoutError, loggingOut, loggedIn, loggedOut, logout, showClasses, openClassPage, go,
         };
     },
@@ -140,7 +147,7 @@ export const App = defineComponent({
                     <template v-if="openClass">
                         <p class="nav-label">{{ openClass.name }}</p>
                         <button
-                            v-for="s in SECTIONS"
+                            v-for="s in visibleSections"
                             :key="s.id"
                             class="nav"
                             :class="{ active: section === s.id }"
@@ -173,6 +180,12 @@ export const App = defineComponent({
                         :name="openClass.name"
                         :role="openClass.role"
                         :me="me"
+                        @logged-out="loggedOut"
+                    />
+                    <AnalyticsSection
+                        v-else-if="section === 'analytics'"
+                        :group="openClass.group"
+                        :name="openClass.name"
                         @logged-out="loggedOut"
                     />
                     <MembersSection

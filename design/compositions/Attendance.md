@@ -30,3 +30,12 @@ so they can follow up on a missing record.
 ```endpoints
 Attendance.Mine at /attendance/mine
 ```
+
+A user who may view everyone's attendance can also
+[see the whole class's attendance](reaction:Attendance.ForClass), shown as
+[every person on every shift, in time order, with their status or none if not yet marked](former:Attendance.ClassRecords),
+which the analytics page summarizes per member. Anyone else is refused as not allowed.
+
+```endpoints
+Attendance.ForClass at /attendance/class
+```

@@ -326,6 +326,26 @@ Former "the account of (user)" — inputs (user); bindings (username); promises 
     username
 ```
 
+### the attendance in (group)
+
+Authored path: `Attendance.ClassRecords`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 36.
+
+```former
+Former "the attendance in (group)" — inputs (group); bindings (week, shift, start, end, member, status); promises exactly one record — forms:
+  each ShiftScheduling._weeks (context: group) has (week)
+    where ShiftScheduling._shiftsInWeek (week) has (end, shift, start)
+    where ShiftScheduling._assignees (shift) has (user: member)
+    where whether AttendanceTracking._record (event: shift, user: member) has (status)
+    arranged by start
+    form a record of
+      end
+      shift
+      start
+      status
+      user: member
+```
+
 ### the attendance of (user) in (group)
 
 Authored path: `Attendance.MyRecords`.
@@ -542,6 +562,48 @@ Former "the weekly template of (group)" — inputs (group); bindings (slot, week
 ```
 
 ## Reactions
+
+### Attendance.ForClass
+
+Authored path: `Attendance.ForClass`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 35.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 40.
+
+```reaction
+when RequestBoundary.request (group, path: "/attendance/class", requestId, session)
+then
+  Sessioning.current (session)
+```
+
+### Attendance.ForClass:allowed#2
+
+Authored path: `Attendance.ForClass`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 35.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 40.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.ForClass
+where
+  earlier, RequestBoundary.request (group, path: "/attendance/class", requestId, session)
+  view "(user) may view everyone's attendance in (group)" with (group, user)
+then
+  RequestBoundary.respond (records: former "the attendance in (group)" with (group), requestId)
+```
+
+### Attendance.ForClass:not-allowed#2
+
+Authored path: `Attendance.ForClass`.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 35.
+- Covered by [Attendance](../design/compositions/Attendance.md), line 40.
+
+```reaction
+when Sessioning.current (session, user), asked by Attendance.ForClass
+where
+  earlier, RequestBoundary.request (group, path: "/attendance/class", requestId, session)
+  no view "(user) may view everyone's attendance in (group)" with (group, user)
+then
+  RequestBoundary.respond (error: "NOT_ALLOWED", requestId)
+```
 
 ### Attendance.ForShift
 
@@ -3345,6 +3407,7 @@ object or lacks a required key. The response uses `INVALID_INPUT` and names
 the path or missing key. A declared default fills an absent key. Endpoints
 not listed here have no explicit input contract.
 
+- `/attendance/class` — requires `session`, `group`
 - `/attendance/mark` — requires `session`, `shift`, `member`, `status`
 - `/attendance/mine` — requires `session`, `group`
 - `/attendance/shift` — requires `session`, `shift`
