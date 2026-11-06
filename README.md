@@ -21,6 +21,9 @@ It's deployed at [table.mit-sdg.dev](https://table.mit-sdg.dev/).
 
 - You can read the final concept specifications [here](design/concepts/) and the final compositions (endpoints, reactions, and access rules) [here](design/compositions/)
 
+## P5
+- You can read my final deliverables [here](milestones/p5/personal_reflection.md)
+
 ## Setting up the app locally
 
 This repo has all that you need to run TAble locally on your computer.
